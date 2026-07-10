@@ -1,0 +1,14 @@
+{
+  "name": "spec-loop",
+  "description": "Spec-driven plan→implement workflow with subagent orchestration and a legible-shell Bash guard.",
+  "owner": {
+    "name": "Rick Li"
+  },
+  "plugins": [
+    {
+      "name": "spec-loop",
+      "source": "./",
+      "description": "Spec-driven plan→implement workflow with subagent orchestration and a legible-shell Bash guard."
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "name": "spec-loop",
+  "description": "Spec-driven plan→implement workflow: /brainstorm turns ideas into branch-first spec folders, /implement executes them with subagent orchestration, and a PreToolUse hook keeps every Bash call legible to the permission matcher.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Rick Li"
+  }
+}
