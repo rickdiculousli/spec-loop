@@ -24,6 +24,10 @@ A Claude Code **plugin** (and its own single-plugin marketplace, via `.claude-pl
 - Config knobs are env vars read at runtime, set via `settings.json` `"env"`: `LEGIBLE_BASH` (hook mode) and `SPEC_LOOP_PUSH` (`auto` default / `off` — gates the pushes in `spec.sh save`/`start`). Both are documented in README's Configuration section; keep that table in sync when adding a knob.
 - The hook judges shell *structure*, not content: it truncates at heredoc openers, joins backslash-continued lines, and strips quoted spans before pattern-matching, so e.g. `grep "a && b"` must keep passing.
 
+## Versioning
+
+Before the final commit confirmation for any change that touches plugin behavior (scripts, skills, hooks, templates), bump `version` in `.claude-plugin/plugin.json` — semver patch for fixes, minor for new features/knobs. It's the only version signal users installing via the marketplace get; `marketplace.json` has no version field of its own to keep in sync.
+
 ## Testing changes
 
 `bash tests/run.sh` runs every `tests/test-*.sh`. Current coverage: the hook's block/warn/off/fail-open behavior and quote-stripping (`test-legible-bash.sh`), and the `SPEC_LOOP_PUSH` knob (`test-push-knob.sh`, which builds a throwaway repo + bare origin in `mktemp -d`). Extend these when touching the scripts — e.g. new hook rules get a `check` line, new `spec.sh` behavior gets assertions in the sandbox repo.
