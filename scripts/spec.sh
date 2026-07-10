@@ -11,6 +11,10 @@
 #
 # Conventions: branch name == spec folder name == <slug>. The default branch is never
 # written directly — specs reach it only by merging their branch (PR-friendly by design).
+#
+# Config via env (set in settings.json "env"):
+#   SPEC_LOOP_PUSH=auto (default) — push spec branches to origin when it exists
+#   SPEC_LOOP_PUSH=off            — never push; branches stay local until you push them
 
 set -euo pipefail
 
@@ -24,6 +28,12 @@ cd "$ROOT"
 
 tree_clean() { git diff --quiet && git diff --cached --quiet; }
 has_remote() { git remote get-url origin >/dev/null 2>&1; }
+
+case "${SPEC_LOOP_PUSH:-auto}" in
+  auto|off) ;;
+  *) die "SPEC_LOOP_PUSH must be 'auto' or 'off' (got '${SPEC_LOOP_PUSH}')" ;;
+esac
+should_push() { [[ "${SPEC_LOOP_PUSH:-auto}" == "auto" ]] && has_remote; }
 current_branch() { git rev-parse --abbrev-ref HEAD; }
 
 default_branch() {
@@ -116,8 +126,10 @@ case "$cmd" in
     else
       git commit -m "spec($SLUG): revise"
     fi
-    if has_remote; then
+    if should_push; then
       git push -u origin "$SLUG"
+    elif has_remote; then
+      echo "spec.sh: SPEC_LOOP_PUSH=off — branch '$SLUG' stays local"
     else
       echo "spec.sh: no 'origin' remote — branch '$SLUG' stays local"
     fi
@@ -144,7 +156,7 @@ case "$cmd" in
     set_status "$PROPOSAL" "in-progress"
     git add "$PROPOSAL"
     git commit -m "spec($SLUG): in-progress"
-    if has_remote; then
+    if should_push; then
       git push -u origin "$SLUG" || echo "spec.sh: push failed — push branch '$SLUG' manually later" >&2
     fi
     echo "spec.sh: on branch '$SLUG' — all work (incl. spec deviations) stays here until merge"

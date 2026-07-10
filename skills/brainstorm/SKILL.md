@@ -50,7 +50,7 @@ Create in `specs/<slug>/`:
 
 **`design.md`** — only if real design decisions surfaced during questioning; otherwise skip.
 
-Then run `spec.sh check` to validate the frontmatter, and `spec.sh save <slug>` to commit the folder on the branch (and push it, if a remote exists).
+Then run `spec.sh check` to validate the frontmatter, and `spec.sh save <slug>` to commit the folder on the branch (and push it, if a remote exists — unless the project sets `SPEC_LOOP_PUSH=off`).
 
 ## 4. Self-review before presenting
 

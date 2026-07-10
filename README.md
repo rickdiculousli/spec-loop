@@ -9,7 +9,7 @@ Three skills, one hook, one script:
 |---|---|
 | `/brainstorm <idea>` | Socratic Q&A → `specs/<slug>/` folder (proposal + tasks) committed on its own branch |
 | `/implement <slug>` | Executes the spec: orchestrator dispatches Sonnet implementation workers and independent Sonnet verifiers, checks boxes in real time, commits per task |
-| `/spec-setup` | One-time adoption: scaffolds `specs/`, seeds the permission allowlist, CLAUDE.md pointer, and the legible-shell doctrine into memory |
+| `/spec-setup` | One-time adoption: scaffolds `specs/`, seeds the permission allowlist, CLAUDE.md pointer, config knobs, and the legible-shell doctrine into memory |
 | `legible-bash` hook | PreToolUse guard that rejects Bash calls the permission matcher can't statically read — with the fix in the rejection message |
 | `scripts/spec.sh` | All git choreography, deterministic: `new / save / start / done / list / check` |
 
@@ -78,14 +78,28 @@ alternative:
 | `sleep` polling, trailing `&` | the Bash tool's background mode |
 
 Quoted strings and heredoc bodies are stripped before matching, so `grep "a && b"` passes.
-Configure per project via the `LEGIBLE_BASH` env var in settings `env`: `block` (default),
-`warn` (report but allow), `off`.
+
+## Configuration
+
+Both knobs are environment variables. Set them in a `settings.json` `"env"` block — project-wide
+in `.claude/settings.json`, personal in `.claude/settings.local.json`, or across all projects in
+`~/.claude/settings.json`. Hook processes and Bash tool calls inherit them. `/spec-setup` offers
+to write these for you, asking which scope and which values.
+
+| Variable | Values | Controls |
+|---|---|---|
+| `LEGIBLE_BASH` | `block` (default) · `warn` (report but allow) · `off` | the legible-bash PreToolUse hook |
+| `SPEC_LOOP_PUSH` | `auto` (default: push when `origin` exists) · `off` (never push) | whether `spec.sh save` / `start` push spec branches |
+
+```json
+{ "env": { "LEGIBLE_BASH": "warn", "SPEC_LOOP_PUSH": "off" } }
+```
 
 ## spec.sh reference
 
 ```
 spec.sh new   <slug>   clean tree, on default branch → branch <slug> + specs/<slug>/
-spec.sh save  <slug>   commit the spec folder on its branch; push -u if a remote exists
+spec.sh save  <slug>   commit the spec folder on its branch; push -u if a remote exists and pushing is on
 spec.sh start <slug>   checkout the branch (fetch/reopen as needed), status → in-progress
 spec.sh done  <slug>   status → done, committed; merge lands it
 spec.sh list           portfolio table from proposal.md frontmatter, plus sequencing notes
@@ -95,3 +109,9 @@ spec.sh check          frontmatter validation: required fields, status enum, dep
 Frontmatter registry per `proposal.md`: `title`, `status` (proposed | in-progress | done |
 iceboxed), `priority`, `effort`, `created`, `depends_on`, `sequencing`. Branch name ==
 folder name == slug, so anyone can find and continue any initiative.
+
+## Development
+
+`bash tests/run.sh` runs the test suite (hook behavior + `spec.sh` push knob). Tests are
+self-contained bash scripts; `spec.sh` tests build a throwaway repo with a bare origin under
+`mktemp -d` and clean up after themselves.
