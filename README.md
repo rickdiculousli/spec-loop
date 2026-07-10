@@ -63,6 +63,12 @@ decides when a thread is retired. Project-specific rules the workers must follow
 `specs/HOUSE-RULES.md` — written once at setup, grown whenever a subagent gets something
 wrong that a sentence would have prevented.
 
+Before `spec.sh done`, the orchestrator asks whether to run an optional whole-branch
+review on a model you choose — the per-task verifiers only ever see one task's frozen
+diff, so nothing today catches cross-task drift or contradictions; this phase can, on
+whichever model you pick for it. It's opt-in per run and purely informational — findings
+are reported, never auto-fixed.
+
 ## The legible-bash hook
 
 Permission prompts mostly come from shell the matcher can't statically read. The hook
