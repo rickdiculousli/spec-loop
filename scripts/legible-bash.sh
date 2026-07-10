@@ -51,7 +51,7 @@ if [ "$(printf '%s\n' "$judged" | grep -c .)" -gt 1 ]; then
   hit "multi-line script: write it to the session scratchpad and run it as 'bash <path>'"
 fi
 if printf '%s\n' "$judged" | grep -Eq '^[[:space:]]*cd([[:space:]]|$)'; then
-  hit "'cd': use absolute paths or -C flags instead (git -C, go -C, make -C)"
+  hit "'cd': cwd persists across calls — if the command targets the current directory, drop the cd and run it directly; only reach for -C/absolute paths (git -C, go -C, make -C) when the command must target a *different* directory"
 fi
 if printf '%s\n' "$judged" | grep -Eq '^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*='; then
   hit "env-var prefix (FOO=1 cmd): move it into a script or a project task-runner recipe"

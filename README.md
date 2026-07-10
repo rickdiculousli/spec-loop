@@ -72,7 +72,7 @@ alternative:
 | Rejected | Replacement |
 |---|---|
 | `a && b`, `a; b`, multi-line | one statement per call; scratchpad script for real scripts |
-| `cd …` | absolute paths, `git -C`, `go -C`, `make -C` |
+| `cd …` | run directly if already in the target dir (cwd persists); otherwise `git -C`, `go -C`, `make -C`, absolute paths |
 | `FOO=1 cmd` | a script or task-runner recipe |
 | `$(…)`, backticks, `$VAR` | resolve once, paste the literal |
 | `sleep` polling, trailing `&` | the Bash tool's background mode |

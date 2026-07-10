@@ -28,6 +28,7 @@ check 2 block 'make serve &'               "trailing ampersand blocked"
 check 2 block 'echo one\necho two'         "multi-line script blocked"
 
 # legible calls pass
+check 0 block 'git status'                 "bare command in cwd allowed, no cd/-C needed"
 check 0 block 'git -C /repo status'        "plain single statement allowed"
 check 0 block 'grep \"a && b\" file.txt'   "operators inside quotes ignored"
 check 0 block 'bash /path/to/script.sh'    "scratchpad-script pattern allowed"
