@@ -83,8 +83,9 @@ Quoted strings and heredoc bodies are stripped before matching, so `grep "a && b
 
 Both knobs are environment variables. Set them in a `settings.json` `"env"` block — project-wide
 in `.claude/settings.json`, personal in `.claude/settings.local.json`, or across all projects in
-`~/.claude/settings.json`. Hook processes and Bash tool calls inherit them. `/spec-setup` offers
-to write these for you, asking which scope and which values.
+`~/.claude/settings.json`. Hook processes and Bash tool calls inherit them. `/spec-setup` always
+asks whether to keep these defaults or customize them (scope + values) — both knobs are already
+live once the plugin is enabled, so that question isn't skippable via the rest of its menu.
 
 | Variable | Values | Controls |
 |---|---|---|

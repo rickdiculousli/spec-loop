@@ -1,18 +1,20 @@
 ---
 name: spec-setup
-description: One-time project initialization for the spec-loop workflow. Scaffolds specs/ conventions (README + HOUSE-RULES), seeds the permission allowlist for spec.sh, appends a CLAUDE.md pointer, offers to store the legible-shell doctrine in memory, and configures the plugin's env knobs (LEGIBLE_BASH, SPEC_LOOP_PUSH) at the scope the user picks. Use when adopting spec-loop in a repo, or to re-apply any missing piece later.
+description: One-time project initialization for the spec-loop workflow. Scaffolds specs/ conventions (README + HOUSE-RULES), seeds the permission allowlist for spec.sh, appends a CLAUDE.md pointer, offers to store the legible-shell doctrine in memory, and always asks whether to keep or customize the plugin's already-active env knobs (LEGIBLE_BASH, SPEC_LOOP_PUSH). Use when adopting spec-loop in a repo, or to re-apply any missing piece later.
 ---
 
 # /spec-setup — Adopt the workflow in this repo
 
 Set up a project to use `/brainstorm` and `/implement`. Idempotent: every piece is skipped (and reported as already present) if it exists. Every piece edits files the user owns, so **present the menu first** with one AskUserQuestion (multiSelect) and apply only what they pick.
 
+Two things happen in this skill: an opt-in file-scaffolding menu (§The menu), and a mandatory configuration question (§Configuration knobs). Keep them separate — the knobs are not optional scaffolding. `LEGIBLE_BASH` (default `block`) and `SPEC_LOOP_PUSH` (default `auto`) are already live the moment the plugin is enabled, with or without `/spec-setup`. Skipping the knob question would mean the user never got a say in behavior that's already affecting them — so always ask it, even if the menu selection is empty or covers only unrelated pieces.
+
 ## 0. Preconditions
 
 - Inside a git repository? If not, offer `git init` — the workflow is branch-based and cannot run without git.
 - Resolve the plugin root to an absolute path once (this skill lives at `<plugin>/skills/spec-setup/`; templates are in `<plugin>/templates/`, scripts in `<plugin>/scripts/`). Use literal absolute paths everywhere below.
 
-## The menu — offer all five, multiSelect, all recommended
+## The menu — offer all four, multiSelect, all recommended
 
 **1. specs/ scaffolding.** Copy `templates/specs-README.md` → `specs/README.md` and `templates/HOUSE-RULES.md` → `specs/HOUSE-RULES.md` (skip any file that exists). Then tailor `HOUSE-RULES.md`'s `## general` block to reality: read the project's manifests (justfile, Makefile, package.json, go.mod, …) and fill in the actual build/test/lint commands — a scaffold with placeholder commands is worse than none. Add area blocks (`## frontend`, `## backend`, …) only if the project's shape is already clear; otherwise leave the commented examples for later.
 
@@ -38,16 +40,22 @@ This makes every `spec.sh` invocation prompt-free. Suggest the built-in `/fewer-
 
 Memory is per-user and per-project — teammates run `/spec-setup` themselves. If no memory directory exists in this environment, say so and skip; the CLAUDE.md pointer (piece 3) plus the hook still cover it. Seeding memory matters because the hook alone teaches by rejection; memory makes commands legible on the first try.
 
-**5. Configuration knobs.** One AskUserQuestion with three questions:
+## Configuration knobs — always ask, independent of the menu above
 
+Run this regardless of which menu pieces (if any) were picked — it is not skippable by omission. First check every scope's settings file (`.claude/settings.json`, `.claude/settings.local.json`, `~/.claude/settings.json`) for an existing `env.LEGIBLE_BASH` / `env.SPEC_LOOP_PUSH`; report anything already set (which scope, which value — more specific scope wins) so the user isn't asked to configure something they already configured.
+
+Then one AskUserQuestion. Lead with the fact that these are live defaults right now, not a hypothetical:
+
+- **Keep or customize** — "`LEGIBLE_BASH` defaults to `block` (rejects illegible Bash calls) and `SPEC_LOOP_PUSH` defaults to `auto` (spec.sh pushes when origin exists) — both are already active. Keep defaults, or customize?" Options: keep both defaults (recommended) / customize.
+
+If customizing, ask two more questions:
 - **Scope** — where the `"env"` block lives: project `.claude/settings.json` (recommended; shared with the team), personal `.claude/settings.local.json` (this repo, just this user), or user `~/.claude/settings.json` (all of this user's projects).
-- **`LEGIBLE_BASH`** — `block` (recommended: reject illegible Bash calls) / `warn` (report but allow) / `off`.
-- **`SPEC_LOOP_PUSH`** — `auto` (recommended: `spec.sh` pushes spec branches when `origin` exists) / `off` (never push; branches stay local until pushed by hand).
+- **Values** — `LEGIBLE_BASH`: `block` / `warn` (report but allow) / `off`. `SPEC_LOOP_PUSH`: `auto` / `off` (never push; branches stay local until pushed by hand).
 
-Merge the chosen values into that file's `"env"` object — create the file or the object if absent, never clobber other keys. Defaults need no entry: write only non-default values, and if every answer is the default, write nothing and say so. If a different scope already sets one of these vars, point out which value wins (more specific scope overrides) instead of silently stacking entries.
+Merge chosen non-default values into that scope's `"env"` object — create the file or the object if absent, never clobber other keys. If keeping defaults, write nothing; state plainly that both knobs stay at their defaults and where to change them later (this section, rerun anytime).
 
 ## Finish
 
-- Note that the legible-bash guard is active for the whole session wherever the plugin is enabled. If piece 5 was declined, mention that `LEGIBLE_BASH` and `SPEC_LOOP_PUSH` can be set later in any settings `env` block.
-- If anything was created, show a one-line summary per piece (created / skipped-exists / declined).
+- Note that the legible-bash guard is active for the whole session wherever the plugin is enabled.
+- If anything was created, show a one-line summary per piece (created / skipped-exists / declined), plus the configuration outcome (defaults kept / values set and where).
 - Suggest `/brainstorm <idea>` as the next step. Do not commit the scaffolding yourself unless asked — the user may want to review it first.
