@@ -99,17 +99,26 @@ live once the plugin is enabled, so that question isn't skippable via the rest o
 ## spec.sh reference
 
 ```
-spec.sh new   <slug>   clean tree, on default branch → branch <slug> + specs/<slug>/
-spec.sh save  <slug>   commit the spec folder on its branch; push -u if a remote exists and pushing is on
-spec.sh start <slug>   checkout the branch (fetch/reopen as needed), status → in-progress
-spec.sh done  <slug>   status → done, committed; merge lands it
-spec.sh list           portfolio table from proposal.md frontmatter, plus sequencing notes
-spec.sh check          frontmatter validation: required fields, status enum, depends_on integrity
+spec.sh new   <slug>                clean tree, on default branch → branch <slug> + specs/<slug>/
+spec.sh save  <slug>                commit the spec folder on its branch; push -u if a remote exists and pushing is on
+spec.sh start <slug>                checkout the branch (fetch/reopen as needed), status → in-progress
+spec.sh done  <slug>                status → done, committed; merge lands it
+spec.sh list                        portfolio table from proposal.md frontmatter, plus sequencing notes
+spec.sh check                       frontmatter validation: required fields, status enum, depends_on integrity
+spec.sh brief <slug> <N>            extract task N from tasks.md → .spec-loop/<slug>/, prints the path
+spec.sh diff  <slug> <base> <head>  commit list + stat + diff → .spec-loop/<slug>/, prints the path
 ```
 
 Frontmatter registry per `proposal.md`: `title`, `status` (proposed | in-progress | done |
 iceboxed), `priority`, `effort`, `created`, `depends_on`, `sequencing`. Branch name ==
 folder name == slug, so anyone can find and continue any initiative.
+
+`brief`/`diff` exist for `/implement`'s subagent handoffs — task text and review diffs move
+to workers and verifiers as file paths, never pasted through the orchestrator's context. Both
+write into `.spec-loop/<slug>/`, a working-tree scratch dir that self-ignores (its own
+`.gitignore`, no edits needed to the host repo's). It survives session restarts but is
+ordinary untracked scratch: `git clean -fdx` wipes it like anything else untracked — recover
+state from `git log` if that happens.
 
 ## Development
 

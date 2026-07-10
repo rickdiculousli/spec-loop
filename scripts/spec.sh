@@ -8,9 +8,17 @@
 #   spec.sh done  <slug>    flip status to done and commit (lands on the default branch via merge)
 #   spec.sh list            render the portfolio table from proposal.md frontmatter
 #   spec.sh check           validate frontmatter across all specs
+#   spec.sh brief <slug> <N> [outfile]           extract task N from tasks.md, print the path
+#   spec.sh diff  <slug> <base> <head> [outfile] commit list + stat + diff for a task/branch range, print the path
 #
 # Conventions: branch name == spec folder name == <slug>. The default branch is never
 # written directly — specs reach it only by merging their branch (PR-friendly by design).
+#
+# brief/diff write into .spec-loop/<slug>/ — a self-ignoring working-tree scratch dir
+# (untracked, no .gitignore edits needed in the host repo) used to hand subagents their
+# task text and review diffs as files instead of pasting them through session context.
+# It survives session restarts but is ordinary untracked scratch: `git clean -fdx` wipes
+# it like anything else untracked; recover state from `git log` if that happens.
 #
 # Config via env (set in settings.json "env"):
 #   SPEC_LOOP_PUSH=auto (default) — push spec branches to origin when it exists
@@ -59,6 +67,31 @@ resolve_slug() {
   fi
   SPEC_DIR="specs/$SLUG"
   PROPOSAL="$SPEC_DIR/proposal.md"
+}
+
+# Ensure the self-ignoring scratch dir for <slug> exists; print its path.
+workspace_dir() {
+  local dir=".spec-loop/$1"
+  mkdir -p "$dir"
+  if [[ ! -f ".spec-loop/.gitignore" ]]; then
+    # Unnegated '*' hides the whole dir, including this file, from git status —
+    # a negated '!.gitignore' would leave the .gitignore itself untracked and
+    # drag the directory back in as untracked.
+    printf '*\n' > ".spec-loop/.gitignore"
+  fi
+  echo "$dir"
+}
+
+# Extract task N (1-based, by position) from a flat tasks.md checkbox list: the Nth
+# top-level "- [ ]"/"- [x]" line plus any indented continuation lines up to the next
+# top-level checkbox. Assumes tasks.md's documented convention of a flat list with no
+# nested checkboxes.
+extract_task() { # $1=tasks.md $2=N
+  awk -v n="$2" '
+    /^- \[[ xX]\]/ { count++; intask = (count == n) }
+    intask { print }
+    count > n { exit }
+  ' "$1"
 }
 
 # Read one frontmatter value: fm_get <file> <key> → value on stdout (empty if absent).
@@ -287,7 +320,44 @@ case "$cmd" in
     echo "spec.sh: $count specs OK ($warnings warning(s))"
     ;;
 
+  brief)
+    resolve_slug "${2:-}"
+    n="${3:?spec.sh: task number required}"
+    if [[ ! "$n" =~ ^[0-9]+$ ]]; then die "task number must be a positive integer: '$n'"; fi
+    if [[ ! -f "$SPEC_DIR/tasks.md" ]]; then die "missing $SPEC_DIR/tasks.md"; fi
+    ws="$(workspace_dir "$SLUG")"
+    out="${4:-$ws/task-$n-brief.md}"
+    extract_task "$SPEC_DIR/tasks.md" "$n" > "$out.tmp"
+    if [[ ! -s "$out.tmp" ]]; then rm -f "$out.tmp"; die "task $n not found in $SPEC_DIR/tasks.md"; fi
+    mv "$out.tmp" "$out"
+    echo "spec.sh: wrote $out"
+    ;;
+
+  diff)
+    resolve_slug "${2:-}"
+    base="${3:?spec.sh: BASE required}"
+    head="${4:?spec.sh: HEAD required}"
+    git rev-parse --verify --quiet "$base" >/dev/null 2>&1 || die "bad BASE: $base"
+    git rev-parse --verify --quiet "$head" >/dev/null 2>&1 || die "bad HEAD: $head"
+    ws="$(workspace_dir "$SLUG")"
+    out="${5:-$ws/review-$(git rev-parse --short "$base")..$(git rev-parse --short "$head").diff}"
+    {
+      echo "# Review package: $base..$head"
+      echo
+      echo "## Commits"
+      git log --oneline "$base..$head"
+      echo
+      echo "## Files changed"
+      git diff --stat "$base..$head"
+      echo
+      echo "## Diff"
+      git diff -U10 "$base..$head"
+    } > "$out"
+    commits="$(git rev-list --count "$base..$head")"
+    echo "spec.sh: wrote $out ($commits commit(s))"
+    ;;
+
   *)
-    die "usage: spec.sh {new|save|start|done|list|check} [slug]"
+    die "usage: spec.sh {new|save|start|done|list|check|brief|diff} [args]"
     ;;
 esac

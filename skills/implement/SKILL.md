@@ -32,19 +32,19 @@ All git choreography goes through `scripts/spec.sh` in this plugin (`<plugin>/sc
 - Read all tasks upfront and sketch each task's "files to read" set — you're writing it into the brief anyway.
 - **Cluster = shared context root:** ≥3 tasks in one module/dir, read-sets overlapping ≳50%, or a task plus its validate-fix-retry chain. A cluster gets one **zone worker**, continued per task via SendMessage (a returned agent stays resumable — SendMessage by its ID continues the thread with context intact). Everything else gets a fresh task worker.
 - **Schedule clusters contiguously** where dependencies allow: follow-ups stay inside the 5-minute prompt cache, tree deltas stay empty, the zone retires sooner.
-- **Persist run state:** after each task, write ledger, task statuses, and handoff notes to one scratchpad file; pass briefs and handoffs between agents as file paths, not re-tokenized prose. A resumed run must reconstruct from that file alone.
+- **Persist run state:** after each task, write ledger, task statuses, and handoff notes to one scratchpad file; pass briefs and handoffs between agents as file paths, not re-tokenized prose — use `spec.sh brief <slug> <N>` to extract a task's text and `spec.sh diff <slug> <BASE> <HEAD>` to capture its review package (both write to `.spec-loop/<slug>/` and print the path; neither output touches your own context). A resumed run must reconstruct from that file alone.
 
 ## 4. Per-task loop
 
-1. Dispatch the impl worker (Agent tool: `model: sonnet`, `run_in_background: false`). Zone follow-ups go via SendMessage and state the tree delta since the worker's last turn (`git status --porcelain` + diff — this also catches validation side-effects like regenerated artifacts). Empty delta → say "tree unchanged since your last turn"; non-empty → list the files, re-read required only where they intersect its task.
+1. Record the branch's current `HEAD` as this task's BASE — needed by step 3's diff capture; never substitute `HEAD~1` later, since a task's fix-up commits (step 5) can put more than one commit between BASE and the review, and `HEAD~1` would silently drop the earlier ones. Then dispatch the impl worker (Agent tool: `model: sonnet`, `run_in_background: false`). Zone follow-ups go via SendMessage and state the tree delta since the worker's last turn (`git status --porcelain` + diff — this also catches validation side-effects like regenerated artifacts). Empty delta → say "tree unchanged since your last turn"; non-empty → list the files, re-read required only where they intersect its task.
 2. When it reports: run the task's **cheap deterministic validation yourself** (typecheck, targeted test, grep). Expensive suites (full e2e, integration) run once per cluster boundary, not per task.
-3. **Commit the task on the branch** — that commit is the loop's cadence (fix-ups land as follow-up commits; pushing stays user-directed) and freezes the snapshot: capture its diff + SHA and launch the verifier in the background (§6). The next impl worker may start immediately — verification and implementation overlap; recording does not.
-4. **Check the box only when its verifier passed and validation passed** — one Edit per task, immediately, never batched. Never check a box on a workaround, and never weaken or comment out a failing check to get there. A box checked while its cluster suite is pending carries the annotation "(cluster suite pending)" — the suite passing removes it; a suite failure reopens the implicated boxes.
+3. **Commit the task on the branch** — that commit is the loop's cadence (fix-ups land as follow-up commits; pushing stays user-directed) and freezes the snapshot: run `spec.sh diff <slug> <BASE> <HEAD>` (BASE from step 1, HEAD = the commit just made) to capture the review package, then launch the verifier in the background (§6) with the printed path. The next impl worker may start immediately — verification and implementation overlap; recording does not.
+4. **Check the box only when its verifier passed and validation passed** — one Edit per task, immediately, never batched. Never check a box on a workaround, and never weaken or comment out a failing check to get there. Resolve every ⚠️ cannot-verify item from the verifier yourself before checking the box (§6) — you hold plan and cross-task context it doesn't; a confirmed gap routes back to the worker like any failed verification. A box checked while its cluster suite is pending carries the annotation "(cluster suite pending)" — the suite passing removes it; a suite failure reopens the implicated boxes.
 5. **Failure handling — validation failures and verifier concerns route the same way:** a *localized* problem (output points at a specific spot) → one follow-up turn to the same worker; its context is an asset. An *approach* problem (same strategy failed twice, long exploratory stem, substantive verifier objection, ledger breach) → fresh worker whose brief carries the evidence — never a remediation dialogue in a thread that went wrong. After two failed workers, do the task inline and note it.
 
 ## 5. Briefs
 
-House rules come from `specs/HOUSE-RULES.md`: paste the `## general` block into every brief; paste each area block whose section matches the task's territory into that task's briefs and verifier checklists.
+House rules come from `specs/HOUSE-RULES.md`: paste the `## general` block into every brief; paste each area block whose section matches the task's territory into that task's briefs and verifier checklists. Also paste `proposal.md`'s own `## Constraints` section into every brief and verifier checklist for this spec — house rules are project-wide; Constraints is what this initiative specifically demands (exact values, formats, things it must not break).
 
 Impl worker template — fill every line, token-frugal, no "explore the codebase":
 
@@ -53,6 +53,7 @@ Task: <one sentence>
 Files to modify: <exact paths>
 Files to read for context: <exact paths — only what's needed>
 House rules: <paste the matching block(s) from specs/HOUSE-RULES.md>
+Spec constraints: <paste proposal.md's ## Constraints section>
 Do not touch anything else. Do not read broadly. Never touch git, tasks.md, or install anything.
 Steps: <numbered, concrete>
 Validate with: <exact cheap deterministic command> — must pass before you finish.
@@ -74,13 +75,18 @@ One verifier per task — **never the implementer**, never reading the worker's 
 
 ```
 Verify against a frozen snapshot — do NOT read the live tree.
-Diff: <path to captured diff> ; base commit <SHA> (file states via `git show <SHA>:<path>`).
+Diff: <path from spec.sh diff> ; base commit <SHA> (file states via `git show <SHA>:<path>`).
 The task this diff must satisfy: <task text>
 House rules it must follow: <matching block(s) from specs/HOUSE-RULES.md>
+Spec constraints it must follow: <proposal.md's ## Constraints section>
 Worker's report: <path> — fact-check its claims against the diff.
 Find a reason this fails the task. A pass verdict must quote diff lines as evidence;
-otherwise report concerns, most severe first.
+otherwise report concerns, most severe first. If a requirement can't be verified from
+this diff alone (it lives in unchanged code or spans tasks), report it as
+⚠️ cannot-verify instead of broadening your search — don't read outside the diff to chase it.
 ```
+
+Never pre-judge a verifier's findings in its dispatch — don't instruct it to ignore, downgrade, or skip a concern ("at most minor", "don't flag X"). If you expect a finding to be a false positive, let the verifier raise it and adjudicate afterward; suppressing it in the prompt is how a real defect ships.
 
 A subagent's word alone never checks a box — the validation run is always yours.
 
