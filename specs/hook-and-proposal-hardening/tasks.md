@@ -18,7 +18,7 @@
   (double-quoted literal `&&` has no `$`, so it's unaffected by the split). Validate:
   `bash tests/test-legible-bash.sh` exits 0 and prints `ok:` for both new cases.
 
-- [ ] Fix the silent fail-open in `scripts/legible-bash.sh`: in the `else` branch that
+- [x] Fix the silent fail-open in `scripts/legible-bash.sh`: in the `else` branch that
   runs when neither `jq` nor `python3` is on `PATH` (currently a bare `exit 0`), print an
   stderr line naming both missing tools before exiting 0, e.g.
   `echo "legible-bash: no jq or python3 found — allowing Bash call unchecked (install jq or python3 to restore the guard)" >&2`.
