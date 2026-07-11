@@ -126,6 +126,17 @@ set_status() { # $1=proposal.md $2=new-status
   fi
 }
 
+# Extract bullet lines ("- " or "-<tab>") under a '## Success criteria' heading in a
+# proposal.md, stopping at the next '## ' heading or end of file. Prints one bullet per
+# line (empty output if there's no such heading or it has no bullets).
+success_criteria_bullets() { # $1=proposal.md
+  awk '
+    /^## Success criteria/ { insec=1; next }
+    /^## / { insec=0 }
+    insec && /^-[ \t]/ { print }
+  ' "$1"
+}
+
 case "$cmd" in
 
   new)
@@ -310,6 +321,35 @@ case "$cmd" in
             warn "$base: depends_on '$t' has no spec folder here (merged under another name, or a typo?)"
           fi
         done
+      fi
+
+      # Coverage-gate heuristic (warn-only, never fails): for each Success-criteria
+      # bullet, flag it if none of its significant words (>=4 chars, stop-words
+      # excluded) appear anywhere in this spec's tasks.md.
+      if [[ -f "$d/tasks.md" ]]; then
+        tasks_lc="$(tr '[:upper:]' '[:lower:]' < "$d/tasks.md")"
+        while IFS= read -r bullet; do
+          [[ -z "$bullet" ]] && continue
+          clean="$(printf '%s' "$bullet" | tr '[:upper:]' '[:lower:]' | tr -c '[:alnum:] ' ' ')"
+          sig=()
+          for w in $clean; do
+            if [[ ${#w} -lt 4 ]]; then continue; fi
+            case "$w" in
+              this|that|with|from|must|have|been|every|when|where|their|there|while|about|which|would|could|should) continue ;;
+            esac
+            sig+=("$w")
+          done
+          if [[ ${#sig[@]} -eq 0 ]]; then continue; fi
+          covered=0
+          for w in "${sig[@]}"; do
+            if [[ "$tasks_lc" == *"$w"* ]]; then covered=1; break; fi
+          done
+          if [[ $covered -eq 0 ]]; then
+            disp="$bullet"
+            if [[ ${#disp} -gt 60 ]]; then disp="${disp:0:60}..."; fi
+            warn "$base: Success-criteria bullet may not be covered by any task: \"$disp\""
+          fi
+        done < <(success_criteria_bullets "$f")
       fi
     done
 
