@@ -26,7 +26,7 @@
   (a `PATH` with neither tool) prints the warning on stderr and `0` as the exit code —
   confirm both by running once with `2>&1 >/dev/null` to isolate stderr.
 
-- [ ] Add a test case to `tests/test-legible-bash.sh` for the fail-open-loud fix: invoke
+- [x] Add a test case to `tests/test-legible-bash.sh` for the fail-open-loud fix: invoke
   the hook with a `PATH` containing neither `jq` nor `python3` (find a minimal real
   directory on the test machine with neither, or construct one with `mktemp -d` containing
   no binaries) and assert stderr is non-empty and mentions both `jq` and `python3`, while
