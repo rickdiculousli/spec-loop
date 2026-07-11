@@ -56,7 +56,7 @@
   pattern — read `tests/run.sh` first). Validate: `bash tests/run.sh` picks it up and it
   passes.
 
-- [ ] Tighten `skills/brainstorm/SKILL.md` for the Current/Target/Acceptance triad.
+- [x] Tighten `skills/brainstorm/SKILL.md` for the Current/Target/Acceptance triad.
   Update the interrogation list's success-criteria line (around line 29) to ask for a
   falsifiable Current/Target/Acceptance per criterion, not just "checkable, not vibes."
   Update the proposal-writing section (around line 43) so the `## Success criteria`
@@ -64,7 +64,7 @@
   ...; Acceptance: a runnable command or precisely observable check). Validate: re-read
   the file and confirm no remaining wording describes Success criteria as free prose.
 
-- [ ] Update `README.md` in three spots to stay accurate: (1) the Requirements section's
+- [x] Update `README.md` in three spots to stay accurate: (1) the Requirements section's
   fail-open line (~line 19) to mention the hook now warns before allowing; (2) the
   legible-bash section (~line 86) to describe the split quote-handling — single-quoted
   spans always stripped, double-quoted spans stripped only for the compound-statement
@@ -72,13 +72,13 @@
   reference` section's `check` line (~line 113) to mention the new Success-criteria
   coverage warning. Validate: reread each updated line in context for accuracy.
 
-- [ ] Update `CLAUDE.md`'s description of the hook's quote-stripping (the "judges shell
+- [x] Update `CLAUDE.md`'s description of the hook's quote-stripping (the "judges shell
   *structure*, not content" paragraph) to describe the split behavior, and confirm the
   existing fail-open sentence ("fails open without them — preserve that") still holds and
   now additionally implies "loudly." Validate: reread the paragraph against the actual
   code in `scripts/legible-bash.sh` after the fix.
 
-- [ ] Bump `version` in `.claude-plugin/plugin.json` from `0.3.0` to `0.4.0` (minor —
+- [x] Bump `version` in `.claude-plugin/plugin.json` from `0.3.0` to `0.4.0` (minor —
   new `spec.sh check` behavior and a template/skill change, alongside the two bug fixes).
   Validate: `grep '"version"' .claude-plugin/plugin.json` shows `0.4.0`.
 
