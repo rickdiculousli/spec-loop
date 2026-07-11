@@ -27,6 +27,7 @@ if command -v jq >/dev/null 2>&1; then
 elif command -v python3 >/dev/null 2>&1; then
   cmd="$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("tool_input",{}).get("command",""))' 2>/dev/null)"
 else
+  echo "legible-bash: no jq or python3 found — allowing Bash call unchecked (install jq or python3 to restore the guard)" >&2
   exit 0
 fi
 if [ -z "$cmd" ]; then exit 0; fi
@@ -34,11 +35,19 @@ if [ -z "$cmd" ]; then exit 0; fi
 # Judge shell *structure*, not string contents:
 # 1. truncate at a heredoc opener (its body is data, not shell),
 # 2. join backslash-continued lines,
-# 3. strip single- and double-quoted spans.
-judged="$(printf '%s\n' "$cmd" \
+# 3. strip quoted spans before the structural checks (compound statement, cd,
+#    env-var prefix, sleep, trailing '&') — both quote types are inert literal
+#    data there, so stripping both avoids false positives like grep "a && b".
+# For the expansion checks (command substitution, variable expansion) only
+# single-quoted spans are stripped: unlike single quotes, double quotes do NOT
+# block '$' expansion in bash — "$(cmd)" and "$VAR" really do expand — so a
+# double-quoted span must stay visible for those two checks or the hook goes
+# blind to substitutions hidden inside double quotes.
+preprocessed="$(printf '%s\n' "$cmd" \
   | awk '/<<-?["'"'"']?[A-Za-z_]/ { print; exit } { print }' \
-  | awk '{ if (sub(/\\$/, "")) printf "%s", $0; else print }' \
-  | sed -e "s/'[^']*'//g" -e 's/"[^"]*"//g')"
+  | awk '{ if (sub(/\\$/, "")) printf "%s", $0; else print }')"
+judged="$(printf '%s\n' "$preprocessed" | sed -e "s/'[^']*'//g" -e 's/"[^"]*"//g')"
+judged_dq="$(printf '%s\n' "$preprocessed" | sed -e "s/'[^']*'//g")"
 
 msgs=""
 hit() { msgs="${msgs}  - ${1}
@@ -56,10 +65,10 @@ fi
 if printf '%s\n' "$judged" | grep -Eq '^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*='; then
   hit "env-var prefix (FOO=1 cmd): move it into a script or a project task-runner recipe"
 fi
-if printf '%s\n' "$judged" | grep -Fq '$(' || printf '%s\n' "$judged" | grep -q '`'; then
+if printf '%s\n' "$judged_dq" | grep -Fq '$(' || printf '%s\n' "$judged_dq" | grep -q '`'; then
   hit "command substitution (\$(...) or backticks): resolve the value first, paste the literal"
 fi
-if printf '%s\n' "$judged" | grep -Eq '\$[A-Za-z_{]'; then
+if printf '%s\n' "$judged_dq" | grep -Eq '\$[A-Za-z_{]'; then
   hit "variable expansion (\$VAR): paste the literal value"
 fi
 if printf '%s\n' "$judged" | grep -Eq '^[[:space:]]*sleep([[:space:]]|$)'; then

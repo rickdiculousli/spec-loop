@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this repo is
 
-A Claude Code **plugin** (and its own single-plugin marketplace, via `.claude-plugin/marketplace.json` with source `./`). There is no build, lint, or test toolchain — the deliverables are two bash scripts, three skill prose files, three templates, and a hook manifest. Runtime dependencies are deliberately just `bash` + `git` (the hook additionally uses `jq` or `python3` if present, and **fails open** without them — preserve that).
+A Claude Code **plugin** (and its own single-plugin marketplace, via `.claude-plugin/marketplace.json` with source `./`). There is no build, lint, or test toolchain — the deliverables are two bash scripts, three skill prose files, three templates, and a hook manifest. Runtime dependencies are deliberately just `bash` + `git` (the hook additionally uses `jq` or `python3` if present, and **fails open** without them — preserve that, and preserve that it fails open *loudly*: an stderr warning naming the missing tool(s), never a silent `exit 0`).
 
 ## How the pieces connect
 
@@ -22,7 +22,7 @@ A Claude Code **plugin** (and its own single-plugin marketplace, via `.claude-pl
 - Checkbox truthfulness: skills are written so a `tasks.md` box is checked only after validation + independent verification. Edits to `skills/implement/SKILL.md` must not soften that contract.
 - Hook exit-code protocol (PreToolUse): `0` allow, `2` block with stderr fed back to the model, `1` allow with stderr shown to the user (warn mode). Modes come from the `LEGIBLE_BASH` env var: `block` (default) / `warn` / `off`.
 - Config knobs are env vars read at runtime, set via `settings.json` `"env"`: `LEGIBLE_BASH` (hook mode) and `SPEC_LOOP_PUSH` (`auto` default / `off` — gates the pushes in `spec.sh save`/`start`). Both are documented in README's Configuration section; keep that table in sync when adding a knob.
-- The hook judges shell *structure*, not content: it truncates at heredoc openers, joins backslash-continued lines, and strips quoted spans before pattern-matching, so e.g. `grep "a && b"` must keep passing.
+- The hook judges shell *structure*, not content: it truncates at heredoc openers, joins backslash-continued lines, and strips quoted spans before pattern-matching, so e.g. `grep "a && b"` must keep passing. Quote-stripping is split in two: both single- and double-quoted spans are stripped for the compound-statement/`cd`/env-var-prefix/`sleep`/trailing-`&` checks (those literal characters are inert in either quote type), but only single-quoted spans are stripped before the command-substitution/variable-expansion checks — double-quoted `$(…)`/`$VAR` must stay visible to those, since bash still expands them inside double quotes.
 
 ## Versioning
 
@@ -30,7 +30,7 @@ Before the final commit confirmation for any change that touches plugin behavior
 
 ## Testing changes
 
-`bash tests/run.sh` runs every `tests/test-*.sh`. Current coverage: the hook's block/warn/off/fail-open behavior and quote-stripping (`test-legible-bash.sh`), and the `SPEC_LOOP_PUSH` knob (`test-push-knob.sh`, which builds a throwaway repo + bare origin in `mktemp -d`). Extend these when touching the scripts — e.g. new hook rules get a `check` line, new `spec.sh` behavior gets assertions in the sandbox repo.
+`bash tests/run.sh` runs every `tests/test-*.sh`. Current coverage: the hook's block/warn/off/fail-open behavior and quote-stripping (`test-legible-bash.sh`), the `SPEC_LOOP_PUSH` knob (`test-push-knob.sh`, which builds a throwaway repo + bare origin in `mktemp -d`), the `brief`/`diff` subagent-handoff generation (`test-dispatch.sh`), and the Success-criteria coverage-gate warning (`test-coverage-gate.sh`, a throwaway repo via `mktemp -d`, no remote needed since `check` never pushes). Extend these when touching the scripts — e.g. new hook rules get a `check` line, new `spec.sh` behavior gets assertions in the sandbox repo.
 
 For ad-hoc probing beyond the suite:
 

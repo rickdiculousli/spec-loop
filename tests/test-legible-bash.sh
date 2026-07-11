@@ -23,6 +23,8 @@ check 2 block 'cd /x'                      "cd blocked"
 check 2 block 'FOO=1 make'                 "env-var prefix blocked"
 check 2 block 'echo $(date)'               "command substitution blocked"
 check 2 block 'echo $HOME'                 "variable expansion blocked"
+check 2 block 'echo \"$(date)\"'           "command substitution inside double quotes blocked"
+check 2 block 'echo \"$HOME\"'             "variable expansion inside double quotes blocked"
 check 2 block 'sleep 5'                    "sleep blocked"
 check 2 block 'make serve &'               "trailing ampersand blocked"
 check 2 block 'echo one\necho two'         "multi-line script blocked"
@@ -45,5 +47,42 @@ if [ "$got" != "0" ]; then
   exit 1
 fi
 echo "ok: empty payload fails open"
+
+# fail-open must be loud when neither jq nor python3 is on PATH: build a
+# restricted PATH that excludes jq's and python3's real directories (computed
+# via command -v, not hardcoded), then confirm the hook still allows the call
+# (exit 0) but now warns on stderr, naming both tools.
+# Resolve bash's own absolute path *before* restricting PATH: a leading
+# `VAR=val bash ...` prefix still resolves the bare name "bash" by searching
+# the (now-restricted) PATH, so if jq/python3 shared bash's directory, the
+# re-invocation below would fail with 127 for reasons unrelated to this test.
+# Invoking the interpreter by absolute path sidesteps that entirely.
+bash_bin="$(command -v bash)"
+
+jq_dir="" py_dir=""
+jq_path="$(command -v jq 2>/dev/null || true)"
+py_path="$(command -v python3 2>/dev/null || true)"
+[ -n "$jq_path" ] && jq_dir="$(dirname "$jq_path")"
+[ -n "$py_path" ] && py_dir="$(dirname "$py_path")"
+
+restricted=""
+IFS=':' read -r -a parts <<< "$PATH"
+for p in "${parts[@]}"; do
+  if [ "$p" != "$jq_dir" ] && [ "$p" != "$py_dir" ]; then
+    restricted="${restricted:+$restricted:}$p"
+  fi
+done
+
+got=0
+out="$(printf '{"tool_input":{"command":"rm -rf /"}}' | PATH="$restricted" "$bash_bin" "$HOOK" 2>&1 1>/dev/null)" || got=$?
+if [ "$got" != "0" ]; then
+  echo "FAIL: fail-open-loud — want exit 0, got $got" >&2
+  exit 1
+fi
+if ! printf '%s' "$out" | grep -q 'jq' || ! printf '%s' "$out" | grep -q 'python3'; then
+  echo "FAIL: fail-open-loud — stderr did not mention both jq and python3: $out" >&2
+  exit 1
+fi
+echo "ok: fail-open is loud when jq and python3 are both missing"
 
 echo "PASS: test-legible-bash"
