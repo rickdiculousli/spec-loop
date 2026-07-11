@@ -1,6 +1,6 @@
 ---
 title: Harden legible-bash quoting/fail-open and add a spec coverage gate
-status: proposed
+status: in-progress
 priority: P2
 effort: S
 created: 2026-07-11
