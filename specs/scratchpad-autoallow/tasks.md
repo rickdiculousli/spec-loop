@@ -1,5 +1,10 @@
 # Tasks — scratchpad-autoallow
 
+**Iceboxed — not executed.** See `proposal.md`'s Rejected section: an independent review
+found the substring-match mechanism exploitable and the underlying approach (auto-approving
+scratchpad script execution sight-unseen) unsound regardless of how the invocation is
+parsed. Left unchecked as a record of the intended shape, not a to-do list.
+
 - [ ] Restructure `scripts/legible-bash.sh`'s early exit: move the JSON-parsing block
   (jq/python3 extraction of `.tool_input.command` and `.session_id`) so it runs *before*
   the `if [ "$mode" = "off" ]; then exit 0; fi` check, not after. Keep the existing

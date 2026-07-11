@@ -1,12 +1,37 @@
 ---
 title: Auto-allow legible Bash calls under the session scratchpad and .spec-loop scratch dirs
-status: proposed
+status: iceboxed
 priority: P2
 effort: S
 created: 2026-07-11
 depends_on: "-"
-sequencing: Second spec in this repo's own portfolio; extends legible-bash.sh from hook-and-proposal-hardening.
+sequencing: Iceboxed — see Rejected section below. Not merged into the active portfolio.
 ---
+
+## Rejected
+
+An independent review (fable model, 2026-07-11) found the core mechanism unsound before
+implementation started:
+
+1. **Concrete bypasses in the substring-match design**: matching raw command text for
+   `/<session_id>/scratchpad/` or `.spec-loop/` is fooled by a trailing comment
+   (`rm -rf ~ # .spec-loop/`), a decoy argument
+   (`tar czf out.tgz /etc/.spec-loop/nope /etc/shadow`), or the substring simply appearing
+   inside a URL — all pass the existing structural checks and would have been auto-approved.
+2. **The deeper problem survives even a hardened invocation parser**: auto-approving
+   `bash <scratchpad-script>` auto-approves the script's *contents* sight-unseen. The
+   interactive permission prompt is today's only gate on what such a script actually does —
+   scripts exist in scratchpad specifically to run the complex shell legible-bash forbids
+   inline. No amount of rigor in parsing the *invocation* (even a proper `shlex` tokenizer +
+   `os.path.realpath()` containment check, as the review recommended if this were pursued)
+   changes that the risk lives in the file, not the argv.
+
+Decision: don't ship auto-allow for scratchpad or `.spec-loop` paths. The permission prompt
+stays the real gate. Re-entry criteria: revisit only if (a) a mechanism to vet script
+*contents* (not just the invocation shape) is designed, and the trust boundary of
+"auto-approving code the model itself just wrote to scratchpad, without content review" is
+explicitly accepted as acceptable risk — or (b) scope narrows to read-only commands
+(`cat`/`ls`/etc.) under scratchpad, which carry none of the unreviewed-code-execution risk.
 
 ## Why
 
