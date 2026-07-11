@@ -1,71 +1,83 @@
 ---
-title: Dry-run / structural verification for currently-rejected shell constructs
+title: Legible read-only iteration and taught idioms (resolved from the dry-run verification stub)
 status: proposed
-priority: P3 (unscoped)
-effort: ? (needs a dedicated design session)
+priority: P2
+effort: S
 created: 2026-07-11
-depends_on: "scratchpad-autoallow (related, iceboxed)"
-sequencing: Third spec in this repo's own portfolio. Stub only — deliberately not interrogated to a full proposal yet; the user intends to work through the open questions in a separate, judgment-heavy session before this gets a real `## What`/`## Success criteria`. Not iceboxed: this is an open idea awaiting design work, not a rejected one.
+depends_on: "scratchpad-autoallow (related, iceboxed — this satisfies its read-only re-entry criterion without reopening it)"
+sequencing: Second active spec, after hook-and-proposal-hardening (done). Re-scoped 2026-07-11 from the "dry-run verification" stub — the design session rejected all verification mechanisms; see design.md.
 ---
 
 ## Why
 
-`legible-bash.sh` currently rejects, unconditionally, several constructs it can't statically
-reason about: compound statements, `cd`, env-var prefixes (`FOO=1 cmd`), command
-substitution (`$(...)`/backticks), variable expansion (`$VAR`), `sleep` polling, and trailing
-`&`. That doctrine — reject what can't be proven safe by inspection, rather than trying to
-prove arbitrary constructs safe — is deliberate and is what makes the hook's regex/quote-
-stripping approach defensible at all (see `hook-and-proposal-hardening`'s fixed double-quote
-bug for how easily a "prove it's fine" heuristic goes wrong).
+The stub version of this spec asked whether the hook could *verify* safety for
+currently-rejected constructs (loops, env-var prefixes, interpolation) via a dry run. The
+design session answered no: every mechanism either re-parses shell text (the fragility
+class `hook-and-proposal-hardening` just fixed — now with approve powers, where a bug means
+silent execution instead of a missed block) or executes untrusted input at hook time. And
+the permission matcher's prefix matching means a verified command still prompts anyway.
+Full analysis, rejected mechanisms, and external evidence (destructive_command_guard) live
+in `design.md`.
 
-While scoping `scratchpad-autoallow` (now iceboxed — see its proposal's Rejected section),
-the idea came up of instead trying to *verify* safety for some of these rejected shapes —
-loops, env-var prefixes, interpolation — via some kind of "dry run" (in bash or python)
-that assumes safety if the dry run looks clean, rather than rejecting them outright. An
-independent review of the (different, narrower) scratchpad-autoallow idea flagged that
-proving arbitrary shell safe without executing it is not generally tractable, and that a
-real dry run implies either sandboxed execution + rollback (a new subsystem, its own attack
-surface, in tension with this repo's bash+git-only minimalism) or static analysis sound
-enough to trust (not a solved problem for general shell). Those objections apply here too,
-but the idea itself — loops, env-var prefixes, and interpolation are the three most common
-things that make legible subagent scripts illegible today — is worth a real design pass
-rather than dismissing outright.
+What survives is better than a verifier: two of the three constructs already have
+hook-passing spellings (`env FOO=1 cmd`, `find … | xargs …` — verified against the live
+hook), and the remaining gap — read-only per-file iteration without a scratchpad script —
+closes with one audited runner that receives argv and never parses shell.
 
-## Open questions (unresolved — this is why there's no `## What` yet)
+## What
 
-- What would "dry run" concretely mean here: real sandboxed execution with rollback,
-  static/symbolic analysis of the command text, or something narrower (e.g. a curated set of
-  provably-idempotent command shapes, not general loops/substitution)?
-- Which of the three constructs (loops, env-var prefixes, interpolation) are actually
-  tractable to verify, and do they need one unified mechanism or three separate, narrower
-  ones?
-- What does "safe" mean as a target for the dry run to establish — read-only? idempotent?
-  bounded blast radius? reversible?
-- Does this replace, extend, or sit alongside `legible-bash.sh`'s existing reject-by-default
-  posture — and does it require revisiting CLAUDE.md's bash+git-only / jq-python3-optional
-  dependency invariant (e.g. requiring python3 as a hard dependency for this specific
-  mechanism)?
-- Is there a narrower, immediately-useful slice (e.g. just env-var prefixes, since those are
-  arguably the easiest to reason about mechanically) worth splitting into its own MVP-sized
-  spec, versus tackling all three constructs together?
+1. **`scripts/foreach.sh`** — vetted read-only iteration runner:
+   `bash <plugin>/scripts/foreach.sh '<glob>' <cmd> [args…]`. Executes only bare-name
+   commands on a hardcoded read-only allowlist (`grep, wc, head, tail, cat, file, stat`);
+   refuses path-shaped or non-allowlisted commands with exit 2. Behavior details in
+   `design.md`.
+2. **Hook messages teach the idioms** — stderr text only, no rule-logic change: the
+   env-var-prefix rejection names the one-off spelling `env FOO=1 cmd`; the footer names
+   `find … | xargs …` and the resolved absolute `foreach.sh` path.
+3. **`/spec-setup` seeds the runner's allowlist entry** —
+   `Bash(bash <abs-plugin-root>/scripts/foreach.sh *)`, alongside the existing `spec.sh`
+   entry (same prescribed-exact-path trust model).
+4. **Docs stay coupled** (per CLAUDE.md's cross-file-coupling rule, same commit): README
+   hook table + components table, `templates/legible-shell-memory.md`.
+5. **Tests**: new `tests/test-foreach.sh`; extended `tests/test-legible-bash.sh` message
+   assertions.
 
-## Constraints (known so far)
+## Constraints
 
-- Must not weaken `legible-bash.sh`'s existing rejections for constructs this mechanism
-  doesn't explicitly cover — anything not proven safe stays rejected.
-- Any resolution here either satisfies CLAUDE.md's existing invariants (bash+git only,
-  jq/python3 optional-best-effort, hook fails open loudly) or makes an explicit, deliberate
-  case in this proposal for amending them — not a silent scope-widening.
+- The hook stays block/pass — no `permissionDecision: "allow"`, no auto-approve path.
+- No new dependencies: the runner is plain bash; existing invariants (jq/python3 optional,
+  fail open loudly) untouched.
+- No existing rejection weakens — only stderr wording changes.
+- Allowlist growth criterion: a command joins the runner's allowlist only if it has no flag
+  that writes to the filesystem (`sort -o` and `sed -i` are the canonical exclusions).
+- Version bump: minor (new feature) in `.claude-plugin/plugin.json` before the final commit.
 
-## Out of scope (for this stub)
+## Out of scope
 
-- Committing to any mechanism, dependency, or task list right now — this file exists to
-  hold the idea and its context for a follow-up design session, not to scope an MVP.
-- Re-litigating `scratchpad-autoallow`'s specific rejected design (substring path matching)
-  — that's closed; see its own proposal.
+- Any verification mechanism — sandboxed dry-run, static verifier, shim dry-run — rejected
+  with reasons in `design.md`; do not relitigate without new evidence.
+- Loops with write effects or multi-step bodies: scratchpad script + one prompt stays the
+  path, deliberately.
+- Widening `$VAR` / `$(…)`: resolve-then-paste stays doctrine.
+- Graduated-response hook modes (dcg-style confirm codes) — future idea, noted in design.md.
+- Reopening the `scratchpad-autoallow` icebox decision.
 
 ## Success criteria
 
-Not yet defined — blocked on the open questions above. Do not add tasks.md or start
-`/implement` until a follow-up session resolves enough of them to write real
-Current/Target/Acceptance criteria and concrete tasks.
+- Current: read-only per-file iteration needs a scratchpad script plus a permission prompt,
+  or a `find | xargs` pipeline the model must think of unprompted. Target: one hook-passing
+  call via `scripts/foreach.sh`. Acceptance: a PreToolUse payload with command
+  `bash <abs>/scripts/foreach.sh *.md wc -l` exits 0 through `scripts/legible-bash.sh`, and
+  `bash tests/test-foreach.sh` passes.
+- Current: no runner exists. Target: `foreach.sh` executes only bare-name allowlisted
+  read-only commands (`grep, wc, head, tail, cat, file, stat`) and refuses others.
+  Acceptance: `bash scripts/foreach.sh '*.md' rm -f` and
+  `bash scripts/foreach.sh '*.md' /bin/cat` both exit 2 with a refusal message on stderr,
+  asserted in `tests/test-foreach.sh`.
+- Current: the env-prefix rejection says only "script or task-runner recipe", and the
+  footer names no iteration idiom. Target: the env-prefix message includes the literal
+  spelling `env FOO=1 cmd`; the footer includes `xargs` and the absolute `foreach.sh` path.
+  Acceptance: `tests/test-legible-bash.sh` asserts those substrings in rejection stderr.
+- Current: `/spec-setup` seeds only the `spec.sh` permission entry. Target: it also seeds
+  the `foreach.sh` entry. Acceptance: `skills/spec-setup/SKILL.md` menu item 2 lists
+  `Bash(bash <abs-plugin-root>/scripts/foreach.sh *)`.
