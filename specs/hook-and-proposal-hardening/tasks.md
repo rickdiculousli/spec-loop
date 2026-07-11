@@ -84,4 +84,4 @@
 
 - [x] Run the full suite and confirm everything passes together: `bash tests/run.sh`.
 
-- [ ] Mark spec status `done`
+- [x] Mark spec status `done`
