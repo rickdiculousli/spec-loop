@@ -33,7 +33,7 @@
   the exit code is still `0`. Validate: `bash tests/test-legible-bash.sh` passes with the
   new case included.
 
-- [ ] Add a coverage-gate warning to `spec.sh check` in `scripts/spec.sh`. For each spec
+- [x] Add a coverage-gate warning to `spec.sh check` in `scripts/spec.sh`. For each spec
   directory already being validated, extract bullet lines (`^- `) under the `## Success
   criteria` heading of `proposal.md` (stop at the next `## ` heading or EOF). For each
   bullet, lowercase it, strip punctuation, split on whitespace, keep tokens with length
