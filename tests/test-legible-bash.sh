@@ -52,6 +52,13 @@ echo "ok: empty payload fails open"
 # restricted PATH that excludes jq's and python3's real directories (computed
 # via command -v, not hardcoded), then confirm the hook still allows the call
 # (exit 0) but now warns on stderr, naming both tools.
+# Resolve bash's own absolute path *before* restricting PATH: a leading
+# `VAR=val bash ...` prefix still resolves the bare name "bash" by searching
+# the (now-restricted) PATH, so if jq/python3 shared bash's directory, the
+# re-invocation below would fail with 127 for reasons unrelated to this test.
+# Invoking the interpreter by absolute path sidesteps that entirely.
+bash_bin="$(command -v bash)"
+
 jq_dir="" py_dir=""
 jq_path="$(command -v jq 2>/dev/null || true)"
 py_path="$(command -v python3 2>/dev/null || true)"
@@ -67,7 +74,7 @@ for p in "${parts[@]}"; do
 done
 
 got=0
-out="$(printf '{"tool_input":{"command":"rm -rf /"}}' | PATH="$restricted" bash "$HOOK" 2>&1 1>/dev/null)" || got=$?
+out="$(printf '{"tool_input":{"command":"rm -rf /"}}' | PATH="$restricted" "$bash_bin" "$HOOK" 2>&1 1>/dev/null)" || got=$?
 if [ "$got" != "0" ]; then
   echo "FAIL: fail-open-loud — want exit 0, got $got" >&2
   exit 1
