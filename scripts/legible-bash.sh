@@ -27,6 +27,7 @@ if command -v jq >/dev/null 2>&1; then
 elif command -v python3 >/dev/null 2>&1; then
   cmd="$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("tool_input",{}).get("command",""))' 2>/dev/null)"
 else
+  echo "legible-bash: no jq or python3 found — allowing Bash call unchecked (install jq or python3 to restore the guard)" >&2
   exit 0
 fi
 if [ -z "$cmd" ]; then exit 0; fi
