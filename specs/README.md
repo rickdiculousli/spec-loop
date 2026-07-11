@@ -31,4 +31,4 @@ This directory is the shared to-do surface for the project: one folder per initi
 
 Ideas deliberately not in the portfolio. Give each explicit re-entry criteria — revisit only when a criterion is met, don't relitigate otherwise.
 
-- (none yet)
+- **scratchpad-autoallow** (`specs/scratchpad-autoallow/proposal.md`) — auto-approving Bash calls that reference the session scratchpad or `.spec-loop/`, to cut permission-prompt friction. Rejected: substring-matching the command text is bypassable (comments, decoy args, URLs), and even a hardened invocation parser still auto-approves unreviewed script *contents*. Re-entry: only with a content-vetting mechanism, or narrowed to read-only commands.
