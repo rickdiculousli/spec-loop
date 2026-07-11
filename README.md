@@ -17,7 +17,8 @@ Three skills, one hook, one script:
 
 - `bash` + `git`. That's it for the workflow — `spec.sh` has no other dependencies.
 - The hook parses its JSON input with `jq` if present, else `python3`, else **fails open**
-  (allows the call) rather than breaking Bash on machines with neither.
+  (allows the call) rather than breaking Bash on machines with neither — loudly: it prints
+  an stderr warning naming the missing tool(s) so the gap doesn't go unnoticed.
 
 ## Install
 
@@ -84,6 +85,9 @@ alternative:
 | `sleep` polling, trailing `&` | the Bash tool's background mode |
 
 Quoted strings and heredoc bodies are stripped before matching, so `grep "a && b"` passes.
+Single-quoted spans are always stripped; double-quoted spans are stripped only for the
+compound-statement check — `$(…)`/`$VAR` inside double quotes is still caught, since bash
+expands both even when double-quoted.
 
 ## Configuration
 
@@ -110,7 +114,8 @@ spec.sh save  <slug>                commit the spec folder on its branch; push -
 spec.sh start <slug>                checkout the branch (fetch/reopen as needed), status → in-progress
 spec.sh done  <slug>                status → done, committed; merge lands it
 spec.sh list                        portfolio table from proposal.md frontmatter, plus sequencing notes
-spec.sh check                       frontmatter validation: required fields, status enum, depends_on integrity
+spec.sh check                       frontmatter validation: required fields, status enum, depends_on integrity;
+                                     plus a warn-only heuristic for Success-criteria bullets with no matching task
 spec.sh brief <slug> <N>            extract task N from tasks.md → .spec-loop/<slug>/, prints the path
 spec.sh diff  <slug> <base> <head>  commit list + stat + diff → .spec-loop/<slug>/, prints the path
 ```
