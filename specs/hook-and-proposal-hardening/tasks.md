@@ -1,6 +1,6 @@
 # Tasks — hook-and-proposal-hardening
 
-- [ ] Fix the double-quote blind spot in `scripts/legible-bash.sh`. Split the single
+- [x] Fix the double-quote blind spot in `scripts/legible-bash.sh`. Split the single
   `judged` pipeline into two: keep the existing both-quotes-stripped variable (rename or
   keep as `judged`) for the compound-statement check (`;`/`&&`/`||`) and the other
   structural checks (`cd`, env-var prefix, `sleep`, trailing `&`) — those are unaffected.
