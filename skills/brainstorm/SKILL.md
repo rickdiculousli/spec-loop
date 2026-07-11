@@ -26,7 +26,7 @@ Ask with AskUserQuestion, **one question per message**, multiple-choice where se
 3. **Constraints** — budget, tooling, platforms, compatibility, things it must not break.
 4. **MVP line** — the smallest version that's still worth doing. Push here: propose a cut-down version and ask if it's enough.
 5. **Out of scope** — what tempting adjacent work is explicitly excluded.
-6. **Success criteria** — how we'll know it worked; must be checkable, not vibes.
+6. **Success criteria** — for each, get a Current / Target / Acceptance triple: where things stand today, what they should be, and a falsifiable pass/fail check (a runnable command or a precisely observable behavior) that proves it — not vibes, and not free prose.
 7. **Priority/effort** — P0–P3, S/M/L, and where it sits relative to the portfolio (`spec.sh list`).
 
 **Use the project's decision tools where they exist.** If `specs/README.md` or the project's skills name a better way to resolve a class of question (e.g. a component-variants skill for visual choices, a prototyping harness for interaction feel), invoke it instead of asking in prose — the user judges rendered output better than descriptions. `tasks.md` steps may likewise name such a round as the way a task resolves its design.
@@ -41,6 +41,12 @@ Ask with AskUserQuestion, **one question per message**, multiple-choice where se
 Create in `specs/<slug>/`:
 
 **`proposal.md`** — frontmatter is the registry (rendered by `spec.sh list`), so fill it fully: `title`, `status: proposed`, `priority` (P0–P3), `effort` (S/M/L), `created` (today, YYYY-MM-DD), `depends_on` (slugs as free text, e.g. `"auth-rework (soft)"`, or `-`), and a one-line `sequencing` note placing it in the portfolio order. Then sections: `## Why`, `## What`, `## Constraints`, `## Out of scope`, `## Success criteria`. Match the voice and density of existing proposals. Short — a proposal that fits on one screen gets read.
+
+`## Success criteria` bullets are Current / Target / Acceptance triples, not free prose — one bullet per criterion:
+```
+- Current: <where things stand today>. Target: <what it should be instead>. Acceptance: <a runnable command or precisely observable check that proves it>.
+```
+Acceptance must be falsifiable — something that can concretely pass or fail, not "works well" or "is checkable in principle." `spec.sh check` heuristically warns when a criterion's significant words don't appear anywhere in `tasks.md`, so keep Current/Target/Acceptance in vocabulary that also shows up in the tasks that implement it.
 
 **`tasks.md`** — `# Tasks — <slug>` then a flat checkbox list. Rules:
 - Tasks are ordered, concrete, and individually checkable. Name exact files where known.
