@@ -11,7 +11,7 @@
   `printf '{"tool_input":{"command":"echo \"$(cat /etc/passwd)\""}}' | bash scripts/legible-bash.sh; echo $?`
   must print `2` on the last line.
 
-- [ ] Extend `tests/test-legible-bash.sh` with cases for the fix above: a `check 2 block`
+- [x] Extend `tests/test-legible-bash.sh` with cases for the fix above: a `check 2 block`
   case for `echo \"$(date)\"` (command substitution inside double quotes now rejected)
   and one for `echo \"$HOME\"` (variable expansion inside double quotes now rejected).
   Confirm the existing `grep \"a && b\" file.txt` passing case still passes unchanged
