@@ -45,7 +45,7 @@
   whose Success-criteria bullet shares no significant word with its `tasks.md`, then
   confirm `spec.sh check` prints a `warn:` line for it and exits `0`.
 
-- [ ] Add `tests/test-coverage-gate.sh`, mirroring the sandbox-repo pattern in
+- [x] Add `tests/test-coverage-gate.sh`, mirroring the sandbox-repo pattern in
   `tests/test-push-knob.sh` (bare origin + work clone in `mktemp -d`, trap cleanup). Cover:
   (a) a proposal whose Success-criteria bullet's keywords are absent from tasks.md
   produces a `warn:` line and `spec.sh check` still exits 0; (b) a proposal whose bullet's
