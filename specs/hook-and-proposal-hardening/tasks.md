@@ -82,6 +82,6 @@
   new `spec.sh check` behavior and a template/skill change, alongside the two bug fixes).
   Validate: `grep '"version"' .claude-plugin/plugin.json` shows `0.4.0`.
 
-- [ ] Run the full suite and confirm everything passes together: `bash tests/run.sh`.
+- [x] Run the full suite and confirm everything passes together: `bash tests/run.sh`.
 
 - [ ] Mark spec status `done`
