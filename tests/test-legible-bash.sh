@@ -48,4 +48,34 @@ if [ "$got" != "0" ]; then
 fi
 echo "ok: empty payload fails open"
 
+# fail-open must be loud when neither jq nor python3 is on PATH: build a
+# restricted PATH that excludes jq's and python3's real directories (computed
+# via command -v, not hardcoded), then confirm the hook still allows the call
+# (exit 0) but now warns on stderr, naming both tools.
+jq_dir="" py_dir=""
+jq_path="$(command -v jq 2>/dev/null || true)"
+py_path="$(command -v python3 2>/dev/null || true)"
+[ -n "$jq_path" ] && jq_dir="$(dirname "$jq_path")"
+[ -n "$py_path" ] && py_dir="$(dirname "$py_path")"
+
+restricted=""
+IFS=':' read -r -a parts <<< "$PATH"
+for p in "${parts[@]}"; do
+  if [ "$p" != "$jq_dir" ] && [ "$p" != "$py_dir" ]; then
+    restricted="${restricted:+$restricted:}$p"
+  fi
+done
+
+got=0
+out="$(printf '{"tool_input":{"command":"rm -rf /"}}' | PATH="$restricted" bash "$HOOK" 2>&1 1>/dev/null)" || got=$?
+if [ "$got" != "0" ]; then
+  echo "FAIL: fail-open-loud — want exit 0, got $got" >&2
+  exit 1
+fi
+if ! printf '%s' "$out" | grep -q 'jq' || ! printf '%s' "$out" | grep -q 'python3'; then
+  echo "FAIL: fail-open-loud — stderr did not mention both jq and python3: $out" >&2
+  exit 1
+fi
+echo "ok: fail-open is loud when jq and python3 are both missing"
+
 echo "PASS: test-legible-bash"
