@@ -5,7 +5,7 @@
   still: script or task-runner recipe); the shared footer line adds the read-only
   iteration idiom `find … | xargs …`. Validation: `bash tests/run.sh` (existing
   `tests/test-legible-bash.sh` still passes unchanged).
-- [ ] Extend `tests/test-legible-bash.sh` with idiom assertions: rejection stderr for a
+- [x] Extend `tests/test-legible-bash.sh` with idiom assertions: rejection stderr for a
   `FOO=1 cmd` payload contains `env FOO=1`; rejection stderr (footer) contains `xargs`;
   payloads `env FOO=1 make test` and `find . -name *.txt | xargs wc -l` both exit 0,
   pinning the taught spellings as passing. Validation: `bash tests/run.sh` passes.
