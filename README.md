@@ -78,9 +78,9 @@ alternative:
 
 | Rejected | Replacement |
 |---|---|
-| `a && b`, `a; b`, multi-line | one statement per call; scratchpad script for real scripts |
+| `a && b`, `a; b`, multi-line | one statement per call; `find . -name <glob> \| xargs <cmd>` for read-only iteration; scratchpad script for real scripts |
 | `cd …` | run directly if already in the target dir (cwd persists); otherwise `git -C`, `go -C`, `make -C`, absolute paths |
-| `FOO=1 cmd` | a script or task-runner recipe |
+| `FOO=1 cmd` | `env FOO=1 cmd` for a one-off; a script or task-runner recipe for recurring setups |
 | `$(…)`, backticks, `$VAR` | resolve once, paste the literal |
 | `sleep` polling, trailing `&` | the Bash tool's background mode |
 
