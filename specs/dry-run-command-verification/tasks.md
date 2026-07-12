@@ -9,11 +9,11 @@
   `FOO=1 cmd` payload contains `env FOO=1`; rejection stderr (footer) contains `xargs`;
   payloads `env FOO=1 make test` and `find . -name *.txt | xargs wc -l` both exit 0,
   pinning the taught spellings as passing. Validation: `bash tests/run.sh` passes.
-- [ ] Update `README.md` legible-bash hook table: the `FOO=1 cmd` row's replacement adds
+- [x] Update `README.md` legible-bash hook table: the `FOO=1 cmd` row's replacement adds
   "`env FOO=1 cmd` for a one-off"; the multi-line row's replacement mentions read-only
   iteration via `find | xargs`. Validation: wording matches the hook's actual stderr
   (read both).
-- [ ] Update `templates/legible-shell-memory.md`: the env-prefix bullet gains the
+- [x] Update `templates/legible-shell-memory.md`: the env-prefix bullet gains the
   `env FOO=1 cmd` one-off spelling; the multi-statement bullet (or a new bullet) names
   `find | xargs` for read-only per-file iteration before reaching for a scratchpad
   script. Validation: vocabulary matches the hook messages verbatim.
