@@ -63,7 +63,7 @@ if printf '%s\n' "$judged" | grep -Eq '^[[:space:]]*cd([[:space:]]|$)'; then
   hit "'cd': cwd persists across calls — if the command targets the current directory, drop the cd and run it directly; only reach for -C/absolute paths (git -C, go -C, make -C) when the command must target a *different* directory"
 fi
 if printf '%s\n' "$judged" | grep -Eq '^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*='; then
-  hit "env-var prefix (FOO=1 cmd): move it into a script or a project task-runner recipe"
+  hit "env-var prefix (FOO=1 cmd): for a one-off, spell it 'env FOO=1 cmd' (fully literal, passes this hook); recurring setups belong in a script or a project task-runner recipe"
 fi
 if printf '%s\n' "$judged_dq" | grep -Fq '$(' || printf '%s\n' "$judged_dq" | grep -q '`'; then
   hit "command substitution (\$(...) or backticks): resolve the value first, paste the literal"
@@ -83,7 +83,7 @@ if [ -z "$msgs" ]; then exit 0; fi
 {
   echo "legible-bash: rejected — every Bash call must be statically legible to the permission matcher."
   printf '%s' "$msgs"
-  echo "Rewrite and retry. For genuinely complex shell, write a script into the session scratchpad and run: bash <script>."
+  echo "Rewrite and retry. For read-only per-file iteration, pipes are legible: find . -name <glob> | xargs <cmd>. For genuinely complex shell, write a script into the session scratchpad and run: bash <script>."
   echo "(Set LEGIBLE_BASH=warn or =off in settings env to relax this guard.)"
 } >&2
 
