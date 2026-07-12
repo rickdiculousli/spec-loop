@@ -57,36 +57,35 @@ a content-blocker they are a bypass vector; for this hook `env FOO=1 cmd` is a l
 idiom, because the hook judges structure and defers content judgment to the matcher/human
 prompt. Do not later "fix" the env idiom as if it were a hole.
 
-## Chosen design: prescribed idioms + one audited argv runner
+## Also rejected: a vetted `foreach.sh` runner (cut 2026-07-11, portability)
+
+The session's initial recommendation included an audited argv-based iteration runner
+(`bash <plugin>/scripts/foreach.sh '<glob>' <cmd>` — never re-parses shell, hardcoded
+read-only command allowlist, seeded exact-path permission entry like `spec.sh`). Cut on a
+second pass: the friction win requires an allowlist entry containing a machine-specific
+absolute plugin path in a *shared* `.claude/settings.json` — one entry per teammate per
+machine, rotting whenever the plugin root moves. `spec.sh` carries the same flaw but is
+essential to the workflow; the runner was a convenience whose main use-cases `find | xargs`
+already covers (including recursion). Re-entry: only if the harness gains portable
+allowlist spellings (e.g. variable expansion in permission rules) or the residual gap
+proves painful in practice.
+
+## Chosen design: teach the already-passing idioms
 
 Two of the three constructs already have hook-passing spellings (verified against the live
-hook): `env FOO=1 make test` and `find . -name *.txt | xargs wc -l`. The remaining gap —
-read-only per-file iteration without a scratchpad script — is closed by `scripts/foreach.sh`,
-whose trust model is the point:
-
-- **It never parses shell text.** It receives already-parsed argv from the Bash tool and
-  execs `"$cmd" "${args[@]}" "$file"` per match. No quoting, no interpolation, no
-  re-parse — the entire bypass class dcg's regression museum documents cannot occur.
-- **Safety judgment lives inside one fixed, auditable file**: inner command must be a bare
-  name (no `/`, so path-shaped spellings can't smuggle a lookalike binary) on a hardcoded
-  read-only allowlist — `grep, wc, head, tail, cat, file, stat` — chosen because none has a
-  flag that writes to the filesystem (this is the audit criterion for ever growing the
-  list; e.g. `sort` is excluded for `-o`, `sed` for `-i`).
-- **Recognition is prescribed**: `/spec-setup` seeds the exact absolute-path entry
-  `Bash(bash <abs-plugin-root>/scripts/foreach.sh *)`, the same trust model `spec.sh`
-  already has. No hook auto-approve, no `permissionDecision`, hook stays block/pass.
-- Runner behavior: `shopt -s nullglob globstar` (so `'**/*.md'` recurses); non-file matches
-  skipped; per-file `== <file> ==` header on stdout; a nonzero inner exit (e.g. `grep` with
-  no match) does not abort the sweep; usage/refusal errors exit 2 with the reason on stderr;
-  a completed sweep exits 0, noting zero matches on stderr.
-
-This satisfies `scratchpad-autoallow`'s own re-entry criterion ("narrowed to read-only
-commands") without reopening that icebox decision.
+hook): `env FOO=1 make test` and `find . -name *.txt | xargs wc -l`. The whole deliverable
+is making those spellings *taught* rather than accidental — the hook's rejection stderr,
+README, and the memory template all name them, and tests pin them as passing so no future
+hook hardening silently breaks them. Read-only iteration that xargs can't express falls
+back to scratchpad-script-plus-one-prompt, which is the product working as designed. No
+hook auto-approve, no `permissionDecision`, no new files, no new dependencies — the hook
+stays block/pass and only its wording changes.
 
 ## Deliberately unsolved
 
-- Loops with write effects or multi-step bodies: scratchpad script + one prompt. That prompt
-  is the product working — a human eyeballs unvetted write-path code once.
+- Loops with write effects, multi-step bodies, or read-only iteration beyond what
+  `find | xargs` expresses: scratchpad script + one prompt. That prompt is the product
+  working — a human eyeballs unvetted script code once.
 - Bare `$VAR` / general `$(…)`: statically unknowable; resolve-then-paste stays doctrine.
 - Recurring env setups: task-runner recipe (matcher-legible), as the hook already says;
   `env FOO=1` is the *one-off* spelling and will prompt, correctly.
