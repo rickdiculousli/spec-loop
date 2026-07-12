@@ -1,6 +1,6 @@
 # Tasks — dry-run-command-verification
 
-- [ ] Update `scripts/legible-bash.sh` stderr text only (no rule-logic change): the
+- [x] Update `scripts/legible-bash.sh` stderr text only (no rule-logic change): the
   env-var-prefix hit message adds the one-off spelling `env FOO=1 cmd` (recurring setups
   still: script or task-runner recipe); the shared footer line adds the read-only
   iteration idiom `find … | xargs …`. Validation: `bash tests/run.sh` (existing

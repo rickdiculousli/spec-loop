@@ -34,6 +34,26 @@ check 0 block 'git status'                 "bare command in cwd allowed, no cd/-
 check 0 block 'git -C /repo status'        "plain single statement allowed"
 check 0 block 'grep \"a && b\" file.txt'   "operators inside quotes ignored"
 check 0 block 'bash /path/to/script.sh'    "scratchpad-script pattern allowed"
+check 0 block 'env FOO=1 make test'        "env-wrapped one-off allowed"
+check 0 block 'find . -name *.txt | xargs wc -l' "find|xargs pipeline allowed"
+
+# rejection stderr must teach the passing idioms it points to
+got=0
+out="$(printf '{"tool_input":{"command":"FOO=1 make test"}}' | LEGIBLE_BASH=block bash "$HOOK" 2>&1 1>/dev/null)" || got=$?
+if [ "$got" != "2" ]; then
+  echo "FAIL: idiom-teaching stderr — want exit 2, got $got" >&2
+  exit 1
+fi
+if ! printf '%s' "$out" | grep -Fq 'env FOO=1'; then
+  echo "FAIL: env-prefix rejection should teach the 'env FOO=1' spelling: $out" >&2
+  exit 1
+fi
+echo "ok: env-prefix rejection teaches env FOO=1 spelling"
+if ! printf '%s' "$out" | grep -Fq 'xargs'; then
+  echo "FAIL: rejection footer should teach the xargs idiom: $out" >&2
+  exit 1
+fi
+echo "ok: footer teaches xargs idiom"
 
 # modes
 check 1 warn  'cd /x'                      "warn mode reports but allows (exit 1)"
