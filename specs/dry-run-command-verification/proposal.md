@@ -1,6 +1,6 @@
 ---
 title: Teach the legible idioms for currently-rejected shell constructs (resolved from the dry-run verification stub)
-status: proposed
+status: in-progress
 priority: P2
 effort: S
 created: 2026-07-11
