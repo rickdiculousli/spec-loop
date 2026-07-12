@@ -17,6 +17,6 @@
   `env FOO=1 cmd` one-off spelling; the multi-statement bullet (or a new bullet) names
   `find | xargs` for read-only per-file iteration before reaching for a scratchpad
   script. Validation: vocabulary matches the hook messages verbatim.
-- [ ] Bump `version` in `.claude-plugin/plugin.json` (patch — message/doc improvement).
+- [x] Bump `version` in `.claude-plugin/plugin.json` (patch — message/doc improvement).
   Validation: `git diff .claude-plugin/plugin.json` shows the bump.
 - [ ] Mark spec status `done`
