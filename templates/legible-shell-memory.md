@@ -8,9 +8,10 @@ metadata:
 Every Bash call must be statically legible to the permission matcher: allowlisted first token, literal arguments, one statement per call.
 
 - No `cd` when the command targets the current directory — just run it directly (cwd persists across calls). Reach for absolute paths or `-C` flags (`git -C`, `go -C`, `make -C`) only when a command must target a *different* directory.
-- No env-var prefixes (`FOO=1 cmd`) — move into a script or a project task-runner recipe.
+- No env-var prefixes (`FOO=1 cmd`) — for a one-off, spell it `env FOO=1 cmd` (fully literal, passes the hook); recurring setups belong in a script or a project task-runner recipe.
 - No `$(...)` / `$VAR` — resolve the value once, paste the literal.
 - No `& / sleep / tail` polling — use the Bash tool's background mode.
+- Read-only per-file iteration — pipes are legible: `find . -name <glob> | xargs <cmd>`.
 - Complex multi-statement shell — write a script to the session scratchpad, run `bash <script>`.
 - Temp files — always the session scratchpad, never `/tmp`.
 
