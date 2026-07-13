@@ -185,19 +185,23 @@ case "$cmd" in
     if [[ "$cur" != "$SLUG" ]]; then die "save must run on branch '$SLUG' (currently on '$cur')"; fi
     if [[ ! -f "$PROPOSAL" ]]; then die "missing $PROPOSAL"; fi
     if [[ ! -f "$SPEC_DIR/tasks.md" ]]; then die "missing $SPEC_DIR/tasks.md"; fi
-    git add "$SPEC_DIR"
-    if git diff --cached --quiet; then die "nothing to commit in $SPEC_DIR"; fi
-    if [[ "$(git rev-list --count HEAD -- "$SPEC_DIR")" == "0" ]]; then
-      git commit -m "spec($SLUG): proposed"
+    if is_local; then
+      echo "spec.sh: SPEC_LOOP_SPECS=local — specs/$SLUG stays local, nothing committed"
     else
-      git commit -m "spec($SLUG): revise"
-    fi
-    if should_push; then
-      git push -u origin "$SLUG"
-    elif has_remote; then
-      echo "spec.sh: SPEC_LOOP_PUSH=off — branch '$SLUG' stays local"
-    else
-      echo "spec.sh: no 'origin' remote — branch '$SLUG' stays local"
+      git add "$SPEC_DIR"
+      if git diff --cached --quiet; then die "nothing to commit in $SPEC_DIR"; fi
+      if [[ "$(git rev-list --count HEAD -- "$SPEC_DIR")" == "0" ]]; then
+        git commit -m "spec($SLUG): proposed"
+      else
+        git commit -m "spec($SLUG): revise"
+      fi
+      if should_push; then
+        git push -u origin "$SLUG"
+      elif has_remote; then
+        echo "spec.sh: SPEC_LOOP_PUSH=off — branch '$SLUG' stays local"
+      else
+        echo "spec.sh: no 'origin' remote — branch '$SLUG' stays local"
+      fi
     fi
     ;;
 
