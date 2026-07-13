@@ -6,6 +6,8 @@
 #   spec.sh save  <slug>    commit specs/<slug> on its branch; push with upstream if a remote exists
 #   spec.sh start <slug>    begin implementation: checkout branch <slug>, flip status to in-progress
 #   spec.sh done  <slug>    flip status to done and commit (lands on the default branch via merge)
+#   spec.sh untrack <slug>  remove an already-committed spec from git's index, commit the removal, mark it local-only
+#   spec.sh track   <slug>  reverse of untrack: git-add an already-local spec, commit it as tracked
 #   spec.sh list            render the portfolio table from proposal.md frontmatter
 #   spec.sh check           validate frontmatter across all specs
 #   spec.sh brief <slug> <N> [outfile]           extract task N from tasks.md, print the path
@@ -23,6 +25,8 @@
 # Config via env (set in settings.json "env"):
 #   SPEC_LOOP_PUSH=auto (default) — push spec branches to origin when it exists
 #   SPEC_LOOP_PUSH=off            — never push; branches stay local until you push them
+#   SPEC_LOOP_SPECS=git (default) — spec.sh new/save/start/done track specs/<slug> in git normally
+#   SPEC_LOOP_SPECS=local         — specs/<slug> is git-ignored; new/save/start/done never touch git for it
 
 set -euo pipefail
 
@@ -264,6 +268,17 @@ case "$cmd" in
     echo "spec.sh: '$SLUG' untracked — specs/$SLUG stays local from here"
     ;;
 
+  track)
+    resolve_slug "${2:-}"
+    cur="$(current_branch)"
+    if [[ "$cur" != "$SLUG" ]]; then die "track must run on branch '$SLUG' (currently on '$cur')"; fi
+    if [[ ! -f "$SPEC_DIR/.gitignore" ]]; then die "$SPEC_DIR is not in local mode (no $SPEC_DIR/.gitignore)"; fi
+    rm -f "$SPEC_DIR/.gitignore"
+    git add "$SPEC_DIR"
+    git commit -m "spec($SLUG): track — git-tracked from here"
+    echo "spec.sh: '$SLUG' tracked — specs/$SLUG is git-tracked from here"
+    ;;
+
   list)
     shopt -s nullglob
     files=(specs/*/proposal.md)
@@ -446,6 +461,6 @@ case "$cmd" in
     ;;
 
   *)
-    die "usage: spec.sh {new|save|start|done|untrack|list|check|brief|diff} [args]"
+    die "usage: spec.sh {new|save|start|done|untrack|track|list|check|brief|diff} [args]"
     ;;
 esac
