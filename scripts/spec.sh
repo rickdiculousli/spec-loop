@@ -6,8 +6,9 @@
 #   spec.sh save  <slug>    commit specs/<slug> on its branch; push with upstream if a remote exists
 #   spec.sh start <slug>    begin implementation: checkout branch <slug>, flip status to in-progress
 #   spec.sh done  <slug>    flip status to done and commit (lands on the default branch via merge)
-#   spec.sh untrack <slug>  remove an already-committed spec from git's index, commit the removal, mark it local-only
-#   spec.sh track   <slug>  reverse of untrack: git-add an already-local spec, commit it as tracked
+#   spec.sh untrack <slug>|--all  remove already-committed spec(s) from git's index, commit the
+#                                 removal, blanket-ignore the rest of specs/ from here
+#   spec.sh track   <slug>|--all  reverse of untrack: git-add already-local spec(s), commit as tracked
 #   spec.sh list            render the portfolio table from proposal.md frontmatter
 #   spec.sh check           validate frontmatter across all specs
 #   spec.sh brief <slug> <N> [outfile]           extract task N from tasks.md, print the path
@@ -25,8 +26,11 @@
 # Config via env (set in settings.json "env"):
 #   SPEC_LOOP_PUSH=auto (default) — push spec branches to origin when it exists
 #   SPEC_LOOP_PUSH=off            — never push; branches stay local until you push them
-#   SPEC_LOOP_SPECS=git (default) — spec.sh new/save/start/done track specs/<slug> in git normally
-#   SPEC_LOOP_SPECS=local         — specs/<slug> is git-ignored; new/save/start/done never touch git for it
+#   SPEC_LOOP_SPECS=git (default) — spec.sh new/save/start/done track specs/ in git normally
+#   SPEC_LOOP_SPECS=local         — the whole specs/ directory is git-ignored (root files
+#                                   like specs/README.md included); new/save/start/done never
+#                                   touch git for it. Existing tracked specs are unaffected —
+#                                   .gitignore never un-tracks an already-committed path.
 
 set -euo pipefail
 
@@ -92,14 +96,17 @@ workspace_dir() {
   echo "$dir"
 }
 
-# Write a self-ignoring .gitignore for specs/<slug>/ (SPEC_LOOP_SPECS=local mode), if absent.
-ignore_spec_dir() {
-  local dir="specs/$1"
-  if [[ ! -f "$dir/.gitignore" ]]; then
+# Write a self-ignoring .gitignore at specs/ root (SPEC_LOOP_SPECS=local mode / untrack),
+# if absent. Blanket, not per-slug: hides every spec folder AND root-level files
+# (specs/README.md, specs/HOUSE-RULES.md) uniformly. Safe alongside already-tracked
+# content — .gitignore never un-tracks a path already in git's index, it only keeps new/
+# untracked paths from showing up — so existing tracked specs are unaffected.
+ignore_specs_root() {
+  if [[ ! -f "specs/.gitignore" ]]; then
     # Unnegated '*' hides the whole dir, including this file, from git status —
     # a negated '!.gitignore' would leave the .gitignore itself untracked and
     # drag the directory back in as untracked.
-    printf '*\n' > "$dir/.gitignore"
+    printf '*\n' > "specs/.gitignore"
   fi
 }
 
@@ -176,8 +183,8 @@ case "$cmd" in
     git checkout -b "$SLUG"
     mkdir -p "$SPEC_DIR"
     if is_local; then
-      ignore_spec_dir "$SLUG"
-      echo "spec.sh: on branch '$SLUG' — write $SPEC_DIR/proposal.md + tasks.md, then run: spec.sh save $SLUG (SPEC_LOOP_SPECS=local — $SPEC_DIR is git-ignored and won't be committed)"
+      ignore_specs_root
+      echo "spec.sh: on branch '$SLUG' — write $SPEC_DIR/proposal.md + tasks.md, then run: spec.sh save $SLUG (SPEC_LOOP_SPECS=local — specs/ is git-ignored and won't be committed)"
     else
       echo "spec.sh: on branch '$SLUG' — write $SPEC_DIR/proposal.md + tasks.md, then run: spec.sh save $SLUG"
     fi
@@ -192,7 +199,7 @@ case "$cmd" in
     if is_local; then
       echo "spec.sh: SPEC_LOOP_SPECS=local — specs/$SLUG stays local, nothing committed"
     else
-      git add "$SPEC_DIR"
+      git add -f "$SPEC_DIR"
       if git diff --cached --quiet; then die "nothing to commit in $SPEC_DIR"; fi
       if [[ "$(git rev-list --count HEAD -- "$SPEC_DIR")" == "0" ]]; then
         git commit -m "spec($SLUG): proposed"
@@ -258,25 +265,42 @@ case "$cmd" in
     ;;
 
   untrack)
-    resolve_slug "${2:-}"
-    cur="$(current_branch)"
-    if [[ "$cur" != "$SLUG" ]]; then die "untrack must run on branch '$SLUG' (currently on '$cur')"; fi
-    git ls-files --error-unmatch "$SPEC_DIR" >/dev/null 2>&1 || die "$SPEC_DIR is not git-tracked"
-    git rm -r --cached "$SPEC_DIR" >/dev/null
-    git commit -m "spec($SLUG): untrack — local only from here"
-    ignore_spec_dir "$SLUG"
-    echo "spec.sh: '$SLUG' untracked — specs/$SLUG stays local from here"
+    if [[ "${2:-}" == "--all" ]]; then
+      git ls-files --error-unmatch specs >/dev/null 2>&1 || die "no git-tracked files under specs/ to untrack"
+      git rm -r --cached specs >/dev/null
+      git commit -m "spec(all): untrack — specs/ stays local from here"
+      ignore_specs_root
+      echo "spec.sh: specs/ untracked — everything under it stays local from here"
+    else
+      resolve_slug "${2:-}"
+      cur="$(current_branch)"
+      if [[ "$cur" != "$SLUG" ]]; then die "untrack must run on branch '$SLUG' (currently on '$cur')"; fi
+      git ls-files --error-unmatch "$SPEC_DIR" >/dev/null 2>&1 || die "$SPEC_DIR is not git-tracked"
+      git rm -r --cached "$SPEC_DIR" >/dev/null
+      git commit -m "spec($SLUG): untrack — local only from here"
+      ignore_specs_root
+      echo "spec.sh: '$SLUG' untracked — specs/$SLUG stays local from here"
+    fi
     ;;
 
   track)
-    resolve_slug "${2:-}"
-    cur="$(current_branch)"
-    if [[ "$cur" != "$SLUG" ]]; then die "track must run on branch '$SLUG' (currently on '$cur')"; fi
-    if [[ ! -f "$SPEC_DIR/.gitignore" ]]; then die "$SPEC_DIR is not in local mode (no $SPEC_DIR/.gitignore)"; fi
-    rm -f "$SPEC_DIR/.gitignore"
-    git add "$SPEC_DIR"
-    git commit -m "spec($SLUG): track — git-tracked from here"
-    echo "spec.sh: '$SLUG' tracked — specs/$SLUG is git-tracked from here"
+    if [[ "${2:-}" == "--all" ]]; then
+      [[ -d specs ]] || die "no specs/ directory"
+      git add -f specs
+      if git diff --cached --quiet; then die "nothing untracked under specs/ to track"; fi
+      git commit -m "spec(all): track — specs/ is git-tracked from here"
+      echo "spec.sh: specs/ tracked — everything under it is git-tracked from here"
+    else
+      resolve_slug "${2:-}"
+      cur="$(current_branch)"
+      if [[ "$cur" != "$SLUG" ]]; then die "track must run on branch '$SLUG' (currently on '$cur')"; fi
+      [[ -d "$SPEC_DIR" ]] || die "$SPEC_DIR does not exist"
+      if git ls-files --error-unmatch "$SPEC_DIR" >/dev/null 2>&1; then die "$SPEC_DIR is already git-tracked"; fi
+      rm -f "$SPEC_DIR/.gitignore"    # legacy per-slug ignore file, if present
+      git add -f "$SPEC_DIR"
+      git commit -m "spec($SLUG): track — git-tracked from here"
+      echo "spec.sh: '$SLUG' tracked — specs/$SLUG is git-tracked from here"
+    fi
     ;;
 
   list)
