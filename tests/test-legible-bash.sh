@@ -5,10 +5,10 @@ set -euo pipefail
 
 HOOK="$(cd "$(dirname "$0")/.." && pwd)/scripts/legible-bash.sh"
 
-# check <want-exit> <mode> <json-escaped command> <label>
+# check <want-exit> <mode> <json-escaped command> <label> [cwd]
 check() {
-  local want="$1" mode="$2" jcmd="$3" label="$4" got=0
-  printf '{"tool_input":{"command":"%s"}}' "$jcmd" \
+  local want="$1" mode="$2" jcmd="$3" label="$4" cwd="${5:-}" got=0
+  printf '{"tool_input":{"command":"%s"},"cwd":"%s"}' "$jcmd" "$cwd" \
     | LEGIBLE_BASH="$mode" bash "$HOOK" >/dev/null 2>&1 || got=$?
   if [ "$got" != "$want" ]; then
     echo "FAIL: $label — want exit $want, got $got" >&2
@@ -20,6 +20,9 @@ check() {
 # blocked structures
 check 2 block 'make && make test'          "compound statement blocked"
 check 2 block 'cd /x'                      "cd blocked"
+check 2 block 'git -C /repo status'        "git -C matching cwd blocked" '/repo'
+check 2 block 'git -C /repo/ status'       "git -C matching cwd with trailing slash blocked" '/repo'
+check 2 block 'git -C . status'            "git -C . blocked regardless of cwd" '/anywhere'
 check 2 block 'FOO=1 make'                 "env-var prefix blocked"
 check 2 block 'echo $(date)'               "command substitution blocked"
 check 2 block 'echo $HOME'                 "variable expansion blocked"
@@ -32,6 +35,8 @@ check 2 block 'echo one\necho two'         "multi-line script blocked"
 # legible calls pass
 check 0 block 'git status'                 "bare command in cwd allowed, no cd/-C needed"
 check 0 block 'git -C /repo status'        "plain single statement allowed"
+check 0 block 'git -C /repo status'        "git -C to a different dir than cwd allowed" '/home/user'
+check 0 block 'git -C /repo/ status'       "git -C with trailing slash but different cwd allowed" '/home/user'
 check 0 block 'grep \"a && b\" file.txt'   "operators inside quotes ignored"
 check 0 block 'bash /path/to/script.sh'    "scratchpad-script pattern allowed"
 check 0 block 'env FOO=1 make test'        "env-wrapped one-off allowed"

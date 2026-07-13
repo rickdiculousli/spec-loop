@@ -24,8 +24,10 @@ input="$(cat)"
 
 if command -v jq >/dev/null 2>&1; then
   cmd="$(printf '%s' "$input" | jq -r '.tool_input.command // empty' 2>/dev/null)"
+  cwd="$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null)"
 elif command -v python3 >/dev/null 2>&1; then
   cmd="$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("tool_input",{}).get("command",""))' 2>/dev/null)"
+  cwd="$(printf '%s' "$input" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("cwd",""))' 2>/dev/null)"
 else
   echo "legible-bash: no jq or python3 found — allowing Bash call unchecked (install jq or python3 to restore the guard)" >&2
   exit 0
@@ -61,6 +63,16 @@ if [ "$(printf '%s\n' "$judged" | grep -c .)" -gt 1 ]; then
 fi
 if printf '%s\n' "$judged" | grep -Eq '^[[:space:]]*cd([[:space:]]|$)'; then
   hit "'cd': cwd persists across calls — if the command targets the current directory, drop the cd and run it directly; only reach for -C/absolute paths (git -C, go -C, make -C) when the command must target a *different* directory"
+fi
+gitc_match="$(printf '%s\n' "$preprocessed" | grep -oE '(^|[^A-Za-z0-9_.-])git[[:space:]]+-C[[:space:]]*("[^"]*"|'"'"'[^'"'"']*'"'"'|[^[:space:]]+)' | head -n1)"
+if [ -n "$gitc_match" ]; then
+  gitc_path="$(printf '%s' "$gitc_match" | sed -E 's/^.*-C[[:space:]]*//')"
+  gitc_path="$(printf '%s' "$gitc_path" | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/')"
+  gitc_norm="${gitc_path%/}"
+  cwd_norm="${cwd%/}"
+  if [ "$gitc_path" = "." ] || { [ -n "$cwd" ] && [ "$gitc_norm" = "$cwd_norm" ]; }; then
+    hit "'git -C ${gitc_path}': already the current directory — drop the '-C ${gitc_path}' and run the git command directly"
+  fi
 fi
 if printf '%s\n' "$judged" | grep -Eq '^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*='; then
   hit "env-var prefix (FOO=1 cmd): for a one-off, spell it 'env FOO=1 cmd' (fully literal, passes this hook); recurring setups belong in a script or a project task-runner recipe"
