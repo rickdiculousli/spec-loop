@@ -86,6 +86,8 @@ untrack_msg="$(git log -1 --format=%s)"
 [ -z "$(git ls-files specs/t2)" ] || fail "untrack left specs/t2 tracked: $(git ls-files specs/t2)"
 echo "$untrack_msg" | grep -qF "untrack" || fail "untrack commit message missing 'untrack': $untrack_msg"
 [ -f specs/t2/.gitignore ] || fail "untrack did not write specs/t2/.gitignore"
+echo "more" >> specs/t2/tasks.md
+[ -z "$(git status --porcelain)" ] || fail "editing tasks.md after untrack showed up in git status: $(git status --porcelain)"
 echo "ok: untrack drops specs/t2 from the index, commits it, and marks it local"
 
 # g. track re-adds specs/t2 to git's index and commits it, in a distinct commit
