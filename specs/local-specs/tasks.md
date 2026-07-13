@@ -1,6 +1,6 @@
 # Tasks — local-specs
 
-- [ ] In `scripts/spec.sh`, add the `SPEC_LOOP_SPECS` knob: a `case` block validating
+- [x] In `scripts/spec.sh`, add the `SPEC_LOOP_SPECS` knob: a `case` block validating
   `git` (default) or `local` — die with a message containing `SPEC_LOOP_SPECS must be`
   for anything else, mirroring the existing `SPEC_LOOP_PUSH` block. Add an `is_local()`
   helper mirroring `should_push()`. Add an `ignore_spec_dir <slug>` helper that writes
@@ -12,7 +12,7 @@
   `SPEC_LOOP_SPECS=local bash scripts/spec.sh new demo` in a sandbox repo, then
   `git status --porcelain` prints nothing.
 
-- [ ] In `scripts/spec.sh`'s `save` case, keep the existing `$PROPOSAL`/`tasks.md`
+- [x] In `scripts/spec.sh`'s `save` case, keep the existing `$PROPOSAL`/`tasks.md`
   existence checks but skip `git add`/`git diff --cached --quiet`/`commit`/push entirely
   when `is_local`; print `spec.sh: SPEC_LOOP_SPECS=local — specs/$SLUG stays local,
   nothing committed` instead. Validate: after task 1's `new`, write minimal
