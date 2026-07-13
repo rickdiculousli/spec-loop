@@ -19,7 +19,7 @@
   `proposal.md`/`tasks.md`, run `SPEC_LOOP_SPECS=local bash scripts/spec.sh save demo`,
   confirm `git log --oneline` is unchanged (no new commit) and the message above appears.
 
-- [ ] In `scripts/spec.sh`'s `start` case, keep the branch-checkout logic and
+- [x] In `scripts/spec.sh`'s `start` case, keep the branch-checkout logic and
   `set_status "$PROPOSAL" "in-progress"` but skip the `git add`/`commit`/push for that
   flip when `is_local`. Reword the `elif [[ -d "$SPEC_DIR" ]]` fallback's echo so it
   doesn't claim the spec was "already merged" when in local mode — branch on `is_local`
@@ -28,7 +28,7 @@
   `SPEC_LOOP_SPECS=local bash scripts/spec.sh start demo`; confirm `git log --oneline`
   has no new commit and `specs/demo/proposal.md` now reads `status: in-progress`.
 
-- [ ] In `scripts/spec.sh`'s `done` case, run `set_status "$PROPOSAL" "done"` but skip
+- [x] In `scripts/spec.sh`'s `done` case, run `set_status "$PROPOSAL" "done"` but skip
   `git add`/`commit` when `is_local`. Validate:
   `SPEC_LOOP_SPECS=local bash scripts/spec.sh done demo`; confirm `git log --oneline` has
   no new commit and `specs/demo/proposal.md` now reads `status: done`.
