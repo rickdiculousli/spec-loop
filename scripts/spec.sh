@@ -253,6 +253,17 @@ case "$cmd" in
     echo "spec.sh: '$SLUG' marked done — open a PR / merge the branch to land it"
     ;;
 
+  untrack)
+    resolve_slug "${2:-}"
+    cur="$(current_branch)"
+    if [[ "$cur" != "$SLUG" ]]; then die "untrack must run on branch '$SLUG' (currently on '$cur')"; fi
+    git ls-files --error-unmatch "$SPEC_DIR" >/dev/null 2>&1 || die "$SPEC_DIR is not git-tracked"
+    git rm -r --cached "$SPEC_DIR" >/dev/null
+    git commit -m "spec($SLUG): untrack — local only from here"
+    ignore_spec_dir "$SLUG"
+    echo "spec.sh: '$SLUG' untracked — specs/$SLUG stays local from here"
+    ;;
+
   list)
     shopt -s nullglob
     files=(specs/*/proposal.md)
@@ -435,6 +446,6 @@ case "$cmd" in
     ;;
 
   *)
-    die "usage: spec.sh {new|save|start|done|list|check|brief|diff} [args]"
+    die "usage: spec.sh {new|save|start|done|untrack|list|check|brief|diff} [args]"
     ;;
 esac
