@@ -55,14 +55,14 @@
   `track` commit. Then `bash scripts/spec.sh` (no args) prints usage mentioning both new
   subcommands.
 
-- [ ] Update `skills/brainstorm/SKILL.md`: in step 3, after the sentence about running
+- [x] Update `skills/brainstorm/SKILL.md`: in step 3, after the sentence about running
   `spec.sh save <slug>` to commit the folder, add a sentence noting that under
   `SPEC_LOOP_SPECS=local` nothing is committed or pushed — the folder stays local-only on
   disk. Adjust the intro paragraph's "the terminal state is a spec branch (pushed if a
   remote exists)" sentence with a short clause covering the local-mode variant. Validate:
   reread both spots for accuracy against task 1-2's actual `spec.sh` behavior.
 
-- [ ] Update `skills/implement/SKILL.md`: in step 1, after the sentence about running
+- [x] Update `skills/implement/SKILL.md`: in step 1, after the sentence about running
   `spec.sh start <slug>`, add one clause noting that under `SPEC_LOOP_SPECS=local` the
   in-progress flip is written to disk but not committed. Validate: reread against task 3's
   actual behavior.
