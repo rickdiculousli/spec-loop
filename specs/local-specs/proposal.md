@@ -39,6 +39,10 @@ Today `spec.sh new/save/start/done` always `git add`/commit everything under `sp
 - A per-spec override of the global knob — one mode per repo/session; no flag to force a single spec folder against the prevailing `SPEC_LOOP_SPECS` value.
 - Bulk/batch conversion of an entire portfolio at once — `untrack`/`track` operate on one slug at a time, which is enough; no "convert everything" command.
 
+## Amendment (2026-07-13, post-merge)
+
+The as-shipped design above (per-slug `specs/<slug>/.gitignore`, `untrack`/`track` scoped to one slug) didn't match the actual intent: the whole `specs/` directory — including root-level `specs/README.md`/`specs/HOUSE-RULES.md`, which the per-slug mechanism never touched — was supposed to go dark under `local` mode, not just individual spec folders one at a time. Corrected in a same-day follow-up: a single blanket `specs/.gitignore` replaces the per-slug file (safe alongside already-tracked specs — `.gitignore` never un-tracks a committed path), `save`/`track` gained `-f` on their `git add` calls so tracking still works once that blanket ignore exists, and `untrack`/`track` gained an `--all` mode that sweeps everything under `specs/` in one commit on the current branch (not per-branch — specs mostly live on the default branch once merged). The "Out of scope: Bulk/batch conversion" line below and the per-slug details in `## What`/`## Success criteria` reflect the original round, not the corrected behavior — see `scripts/spec.sh`, `README.md`, and `CLAUDE.md` for what's actually live.
+
 ## Success criteria
 
 - Current: `spec.sh new/save/start/done` always commit under `specs/<slug>`, regardless of any setting. Target: under `SPEC_LOOP_SPECS=local`, none of the four make any git commit touching `specs/`. Acceptance: in a throwaway repo, running `new`→edit→`save`→`start`→`done` under `SPEC_LOOP_SPECS=local` leaves `git log --oneline` with no commit mentioning `specs/<slug>`, and `git status --porcelain` empty throughout.

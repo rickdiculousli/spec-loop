@@ -105,7 +105,7 @@ skippable via the rest of its menu.
 
 | Variable | Values | Controls |
 |---|---|---|
-| `SPEC_LOOP_SPECS` | `git` (default) · `local` (specs/ never touches git) | whether `spec.sh new/save/start/done` track `specs/<slug>` in git |
+| `SPEC_LOOP_SPECS` | `git` (default) · `local` (the whole `specs/` directory never touches git) | whether `spec.sh new/save/start/done` track `specs/` in git |
 | `LEGIBLE_BASH` | `block` (default) · `warn` (report but allow) · `off` | the legible-bash PreToolUse hook |
 | `SPEC_LOOP_PUSH` | `auto` (default: push when `origin` exists) · `off` (never push) | whether `spec.sh save` / `start` push spec branches |
 
@@ -120,8 +120,8 @@ spec.sh new   <slug>                clean tree, on default branch → branch <sl
 spec.sh save  <slug>                commit the spec folder on its branch; push -u if a remote exists and pushing is on
 spec.sh start <slug>                checkout the branch (fetch/reopen as needed), status → in-progress
 spec.sh done  <slug>                status → done, committed; merge lands it
-spec.sh untrack <slug>              remove an already-committed spec from git's index, commit the removal, mark it local-only
-spec.sh track   <slug>              reverse of untrack: git-add an already-local spec, commit it as tracked
+spec.sh untrack <slug>|--all        remove already-committed spec(s) from git's index, commit the removal, mark local-only
+spec.sh track   <slug>|--all        reverse of untrack: git-add already-local spec(s), commit as tracked
 spec.sh list                        portfolio table from proposal.md frontmatter, plus sequencing notes
 spec.sh check                       frontmatter validation: required fields, status enum, depends_on integrity;
                                      plus a warn-only heuristic for Success-criteria bullets with no matching task
@@ -133,9 +133,18 @@ Frontmatter registry per `proposal.md`: `title`, `status` (proposed | in-progres
 iceboxed), `priority`, `effort`, `created`, `depends_on`, `sequencing`. Branch name ==
 folder name == slug, so anyone can find and continue any initiative.
 
-Under `SPEC_LOOP_SPECS=local`, `new`/`save`/`start`/`done` never touch git for `specs/<slug>` —
-the folder is self-ignored via its own `.gitignore`, the same self-ignoring idiom `.spec-loop/`
-uses below. `untrack`/`track` flip a spec between the two modes on its branch, each in one commit.
+Under `SPEC_LOOP_SPECS=local`, `new`/`save`/`start`/`done` never touch git for anything under
+`specs/` — the whole directory (every spec folder, plus root-level files like `specs/README.md`
+and `specs/HOUSE-RULES.md`) is self-ignored via one blanket `specs/.gitignore`, the same
+self-ignoring idiom `.spec-loop/` uses below. It's safe to add even in a repo with specs already
+committed: `.gitignore` never un-tracks a path already in git's index, it only keeps new/untracked
+paths from showing up — existing tracked specs stay exactly as they are.
+
+`untrack`/`track` flip things across that boundary, one commit each: `untrack <slug>` /
+`track <slug>` for a single spec (must run on that spec's own branch), or `untrack --all` /
+`track --all` to sweep everything under `specs/` at once on the current branch — useful once
+several specs have already landed on the default branch and you want the whole directory to
+go dark (or come back) in one shot.
 
 `brief`/`diff` exist for `/implement`'s subagent handoffs — task text and review diffs move
 to workers and verifiers as file paths, never pasted through the orchestrator's context. Both
