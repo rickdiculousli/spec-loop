@@ -119,7 +119,7 @@
   `SPEC_LOOP_SPECS` knob and two new `spec.sh` subcommands). Validate:
   `grep '"version"' .claude-plugin/plugin.json` shows `0.6.0`.
 
-- [ ] Run the full suite and confirm everything passes together, proving default-mode
+- [x] Run the full suite and confirm everything passes together, proving default-mode
   behavior is unchanged: `bash tests/run.sh`.
 
 - [ ] Mark spec status `done`
