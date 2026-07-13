@@ -94,7 +94,7 @@
   in git at all — only the branch's code commits do. Validate: reread both files for
   consistency with `scripts/spec.sh`'s actual behavior from the tasks above.
 
-- [ ] Update `CLAUDE.md`: add `SPEC_LOOP_SPECS` to the "Config knobs are env vars read at
+- [x] Update `CLAUDE.md`: add `SPEC_LOOP_SPECS` to the "Config knobs are env vars read at
   runtime..." bullet under Core invariants, alongside `LEGIBLE_BASH`/`SPEC_LOOP_PUSH`; add
   `untrack`/`track` wherever the "Cross-file coupling" paragraph names the `spec.sh`
   subcommand surface; add a bullet to the Testing changes section describing
