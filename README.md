@@ -11,7 +11,7 @@ Three skills, one hook, one script:
 | `/implement <slug>` | Executes the spec: orchestrator dispatches Sonnet implementation workers and independent Sonnet verifiers, checks boxes in real time, commits per task |
 | `/spec-setup` | One-time adoption: scaffolds `specs/`, seeds the permission allowlist, CLAUDE.md pointer, config knobs, and the legible-shell doctrine into memory |
 | `legible-bash` hook | PreToolUse guard that rejects Bash calls the permission matcher can't statically read — with the fix in the rejection message |
-| `scripts/spec.sh` | All git choreography, deterministic: `new / save / start / done / list / check` |
+| `scripts/spec.sh` | All git choreography, deterministic: `new / save / start / done / untrack / track / list / check` |
 
 ## Requirements
 
@@ -96,19 +96,21 @@ supplied without a `cwd` to compare against, passes unchanged.
 
 ## Configuration
 
-Both knobs are environment variables. Set them in a `settings.json` `"env"` block — project-wide
+All three knobs are environment variables. Set them in a `settings.json` `"env"` block — project-wide
 in `.claude/settings.json`, personal in `.claude/settings.local.json`, or across all projects in
-`~/.claude/settings.json`. Hook processes and Bash tool calls inherit them. `/spec-setup` always
-asks whether to keep these defaults or customize them (scope + values) — both knobs are already
-live once the plugin is enabled, so that question isn't skippable via the rest of its menu.
+`~/.claude/settings.json`. Hook processes and Bash tool calls inherit them. `/spec-setup` always asks
+about each knob separately, one question per knob — `SPEC_LOOP_SPECS` first, then `LEGIBLE_BASH`, then
+`SPEC_LOOP_PUSH` — since all three are already live once the plugin is enabled, so that question isn't
+skippable via the rest of its menu.
 
 | Variable | Values | Controls |
 |---|---|---|
+| `SPEC_LOOP_SPECS` | `git` (default) · `local` (specs/ never touches git) | whether `spec.sh new/save/start/done` track `specs/<slug>` in git |
 | `LEGIBLE_BASH` | `block` (default) · `warn` (report but allow) · `off` | the legible-bash PreToolUse hook |
 | `SPEC_LOOP_PUSH` | `auto` (default: push when `origin` exists) · `off` (never push) | whether `spec.sh save` / `start` push spec branches |
 
 ```json
-{ "env": { "LEGIBLE_BASH": "warn", "SPEC_LOOP_PUSH": "off" } }
+{ "env": { "SPEC_LOOP_SPECS": "local", "LEGIBLE_BASH": "warn", "SPEC_LOOP_PUSH": "off" } }
 ```
 
 ## spec.sh reference
@@ -118,6 +120,8 @@ spec.sh new   <slug>                clean tree, on default branch → branch <sl
 spec.sh save  <slug>                commit the spec folder on its branch; push -u if a remote exists and pushing is on
 spec.sh start <slug>                checkout the branch (fetch/reopen as needed), status → in-progress
 spec.sh done  <slug>                status → done, committed; merge lands it
+spec.sh untrack <slug>              remove an already-committed spec from git's index, commit the removal, mark it local-only
+spec.sh track   <slug>              reverse of untrack: git-add an already-local spec, commit it as tracked
 spec.sh list                        portfolio table from proposal.md frontmatter, plus sequencing notes
 spec.sh check                       frontmatter validation: required fields, status enum, depends_on integrity;
                                      plus a warn-only heuristic for Success-criteria bullets with no matching task
@@ -128,6 +132,10 @@ spec.sh diff  <slug> <base> <head>  commit list + stat + diff → .spec-loop/<sl
 Frontmatter registry per `proposal.md`: `title`, `status` (proposed | in-progress | done |
 iceboxed), `priority`, `effort`, `created`, `depends_on`, `sequencing`. Branch name ==
 folder name == slug, so anyone can find and continue any initiative.
+
+Under `SPEC_LOOP_SPECS=local`, `new`/`save`/`start`/`done` never touch git for `specs/<slug>` —
+the folder is self-ignored via its own `.gitignore`, the same self-ignoring idiom `.spec-loop/`
+uses below. `untrack`/`track` flip a spec between the two modes on its branch, each in one commit.
 
 `brief`/`diff` exist for `/implement`'s subagent handoffs — task text and review diffs move
 to workers and verifiers as file paths, never pasted through the orchestrator's context. Both
