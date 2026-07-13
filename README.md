@@ -79,7 +79,7 @@ alternative:
 | Rejected | Replacement |
 |---|---|
 | `a && b`, `a; b`, multi-line | one statement per call; `find . -name <glob> \| xargs <cmd>` for read-only iteration; scratchpad script for real scripts |
-| `cd …` | run directly if already in the target dir (cwd persists); otherwise `git -C`, `go -C`, `make -C`, absolute paths |
+| `cd …` | run directly (cwd persists); reach for `git -C`, `go -C`, `make -C`, absolute paths only when you already know the target is genuinely different — never pre-emptively, to guard against a rejection |
 | `git`/`go`/`make -C <dir>` when `<dir>` is already cwd (or `.`) | drop the `-C <dir>` and run the command directly |
 | `FOO=1 cmd` | `env FOO=1 cmd` for a one-off; a script or task-runner recipe for recurring setups |
 | `$(…)`, backticks, `$VAR` | resolve once, paste the literal |

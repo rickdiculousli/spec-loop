@@ -7,7 +7,7 @@ metadata:
 
 Every Bash call must be statically legible to the permission matcher: allowlisted first token, literal arguments, one statement per call.
 
-- No `cd` when the command targets the current directory — just run it directly (cwd persists across calls). Reach for absolute paths or `-C` flags (`git -C`, `go -C`, `make -C`) only when a command must target a *different* directory.
+- No `cd` when the command targets the current directory — just run it directly (cwd persists across calls). Reach for absolute paths or `-C` flags (`git -C`, `go -C`, `make -C`) only when you already know the target is a genuinely *different* directory — never pre-emptively, as a hedge against a rejection.
 - No `git`/`go`/`make -C <dir>` when `<dir>` is already the current directory (or `.`) — drop the flag and run the command directly.
 - No env-var prefixes (`FOO=1 cmd`) — for a one-off, spell it `env FOO=1 cmd` (fully literal, passes the hook); recurring setups belong in a script or a project task-runner recipe.
 - No `$(...)` / `$VAR` — resolve the value once, paste the literal.

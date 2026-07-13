@@ -62,7 +62,7 @@ if [ "$(printf '%s\n' "$judged" | grep -c .)" -gt 1 ]; then
   hit "multi-line script: write it to the session scratchpad and run it as 'bash <path>'"
 fi
 if printf '%s\n' "$judged" | grep -Eq '^[[:space:]]*cd([[:space:]]|$)'; then
-  hit "'cd': cwd persists across calls — if the command targets the current directory, drop the cd and run it directly; only reach for -C/absolute paths (git -C, go -C, make -C) when the command must target a *different* directory"
+  hit "'cd': cwd persists across calls — just run the command directly. Only reach for -C/absolute paths (git -C, go -C, make -C) when you already know the target is a genuinely *different* directory — don't pre-emptively add -C to guard against a rejection"
 fi
 cdirc_match="$(printf '%s\n' "$preprocessed" | grep -oE '(^|[^A-Za-z0-9_.-])(git|go|make)[[:space:]]+-C[[:space:]]*("[^"]*"|'"'"'[^'"'"']*'"'"'|[^[:space:]]+)' | head -n1)"
 if [ -n "$cdirc_match" ]; then
