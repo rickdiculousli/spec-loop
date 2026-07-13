@@ -42,7 +42,7 @@
   t2` (default git mode, so it's committed) → `spec.sh untrack t2`; confirm `git ls-files
   specs/t2` is empty and `git log --oneline` gained a commit mentioning `untrack`.
 
-- [ ] Add a `track` subcommand to `scripts/spec.sh` (reverse of `untrack`):
+- [x] Add a `track` subcommand to `scripts/spec.sh` (reverse of `untrack`):
   `resolve_slug`; die unless the current branch equals `$SLUG`; die with a message
   containing `is not in local mode` unless `specs/$SLUG/.gitignore` exists; then
   `rm -f "$SPEC_DIR/.gitignore"`, `git add "$SPEC_DIR"`, commit
