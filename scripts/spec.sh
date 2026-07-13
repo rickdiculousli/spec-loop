@@ -42,6 +42,12 @@ case "${SPEC_LOOP_PUSH:-auto}" in
   *) die "SPEC_LOOP_PUSH must be 'auto' or 'off' (got '${SPEC_LOOP_PUSH}')" ;;
 esac
 should_push() { [[ "${SPEC_LOOP_PUSH:-auto}" == "auto" ]] && has_remote; }
+
+case "${SPEC_LOOP_SPECS:-git}" in
+  git|local) ;;
+  *) die "SPEC_LOOP_SPECS must be 'git' or 'local' (got '${SPEC_LOOP_SPECS}')" ;;
+esac
+is_local() { [[ "${SPEC_LOOP_SPECS:-git}" == "local" ]]; }
 current_branch() { git rev-parse --abbrev-ref HEAD; }
 
 default_branch() {
@@ -80,6 +86,17 @@ workspace_dir() {
     printf '*\n' > ".spec-loop/.gitignore"
   fi
   echo "$dir"
+}
+
+# Write a self-ignoring .gitignore for specs/<slug>/ (SPEC_LOOP_SPECS=local mode), if absent.
+ignore_spec_dir() {
+  local dir="specs/$1"
+  if [[ ! -f "$dir/.gitignore" ]]; then
+    # Unnegated '*' hides the whole dir, including this file, from git status —
+    # a negated '!.gitignore' would leave the .gitignore itself untracked and
+    # drag the directory back in as untracked.
+    printf '*\n' > "$dir/.gitignore"
+  fi
 }
 
 # Extract task N (1-based, by position) from a flat tasks.md checkbox list: the Nth
@@ -154,7 +171,12 @@ case "$cmd" in
     fi
     git checkout -b "$SLUG"
     mkdir -p "$SPEC_DIR"
-    echo "spec.sh: on branch '$SLUG' — write $SPEC_DIR/proposal.md + tasks.md, then run: spec.sh save $SLUG"
+    if is_local; then
+      ignore_spec_dir "$SLUG"
+      echo "spec.sh: on branch '$SLUG' — write $SPEC_DIR/proposal.md + tasks.md, then run: spec.sh save $SLUG (SPEC_LOOP_SPECS=local — $SPEC_DIR is git-ignored and won't be committed)"
+    else
+      echo "spec.sh: on branch '$SLUG' — write $SPEC_DIR/proposal.md + tasks.md, then run: spec.sh save $SLUG"
+    fi
     ;;
 
   save)
