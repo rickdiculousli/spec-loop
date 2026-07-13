@@ -1,6 +1,6 @@
 ---
 title: Local-only specs mode (SPEC_LOOP_SPECS)
-status: proposed
+status: in-progress
 priority: P1
 effort: M
 created: 2026-07-13
