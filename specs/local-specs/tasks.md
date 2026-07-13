@@ -102,7 +102,7 @@
   `test-push-knob.sh`/`test-coverage-gate.sh`. Validate: reread each spot against the
   actual `scripts/spec.sh` changes and the new test file from the next task.
 
-- [ ] Add `tests/test-local-specs.sh`, mirroring `tests/test-push-knob.sh`'s sandbox
+- [x] Add `tests/test-local-specs.sh`, mirroring `tests/test-push-knob.sh`'s sandbox
   pattern (`mktemp -d`, bare origin + work clone, `trap` cleanup). Cover: (a)
   `SPEC_LOOP_SPECS=local spec.sh new` leaves `git status --porcelain` empty and
   `specs/<slug>/.gitignore` present; (b) `save`/`start`/`done` under local make no new
