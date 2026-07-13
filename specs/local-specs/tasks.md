@@ -67,12 +67,21 @@
   in-progress flip is written to disk but not committed. Validate: reread against task 3's
   actual behavior.
 
-- [ ] Update `skills/spec-setup/SKILL.md`'s "Configuration knobs" section to cover
-  `SPEC_LOOP_SPECS` as a third knob: the intro sentence naming which knobs are "already
-  live" (currently names only `LEGIBLE_BASH`/`SPEC_LOOP_PUSH`), the keep-or-customize
-  question's option text, and the "Values" sub-bullet (`SPEC_LOOP_SPECS`: `git` / `local`,
-  default `git`). Validate: reread the section — it should read naturally with three knobs
-  where it named two.
+- [ ] Restructure `skills/spec-setup/SKILL.md`'s "Configuration knobs" section: replace
+  the single bundled "keep or customize" question (which prior use reported as friction —
+  can't accept one knob's default while changing another without an extra round-trip)
+  with one AskUserQuestion call containing three separate per-knob questions, in this
+  order: `SPEC_LOOP_SPECS` first, then `LEGIBLE_BASH`, then `SPEC_LOOP_PUSH`. Each
+  question's options are that knob's actual values, current default labeled
+  "(recommended)" — `SPEC_LOOP_SPECS`: `git` (recommended) / `local`; `LEGIBLE_BASH`:
+  `block` (recommended) / `warn` / `off`; `SPEC_LOOP_PUSH`: `auto` (recommended) / `off`.
+  Update the intro sentence (currently names only two knobs as "already live") to name
+  all three. Keep the existing settings-scope question as a single shared follow-up,
+  asked once and only if at least one answer differed from its default — do not turn it
+  into a per-knob question too. Update the "merge into that scope's env object" closing
+  guidance to merge only the values that changed. Validate: reread the section —
+  it presents three independent per-knob questions (not one combined keep/customize
+  choice) followed by at most one scope question, with `SPEC_LOOP_SPECS` listed first.
 
 - [ ] Update `README.md`: add a third row to the Configuration table for
   `SPEC_LOOP_SPECS` (`git` default / `local`, controls whether `new/save/start/done`
