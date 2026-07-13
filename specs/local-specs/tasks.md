@@ -122,4 +122,4 @@
 - [x] Run the full suite and confirm everything passes together, proving default-mode
   behavior is unchanged: `bash tests/run.sh`.
 
-- [ ] Mark spec status `done`
+- [x] Mark spec status `done`
