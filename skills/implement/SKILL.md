@@ -18,7 +18,7 @@ All git choreography goes through `scripts/spec.sh` in this plugin (`<plugin>/sc
 - Read `specs/HOUSE-RULES.md`. If it's missing or still the unedited scaffold, say so — briefs without house rules produce plausible-but-wrong code — and offer to fill it in with the user (or run `/spec-setup`) before dispatching anything.
 - Check `depends_on` against `spec.sh list`. If a dependency isn't `done`, stop and ask.
 - **Raise concerns before starting.** If a task is ambiguous, contradicts the code as it exists now, or looks stale, say so and resolve it with the user first — don't reinterpret silently.
-- Run `spec.sh start <slug>` — checks out the spec's branch and flips the proposal to `status: in-progress` on it. From now on **everything stays on the branch, including spec deviations** — revised tasks, scope corrections, any `proposal.md`/`tasks.md` edit. The default branch receives this work only when the branch merges.
+- Run `spec.sh start <slug>` — checks out the spec's branch and flips the proposal to `status: in-progress` on it. From now on **everything stays on the branch, including spec deviations** — revised tasks, scope corrections, any `proposal.md`/`tasks.md` edit. The default branch receives this work only when the branch merges. Under `SPEC_LOOP_SPECS=local`, that in-progress flip is written to disk but not committed — the spec folder stays local-only throughout.
 
 ## 2. Roles and ground rules
 
