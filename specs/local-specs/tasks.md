@@ -67,7 +67,7 @@
   in-progress flip is written to disk but not committed. Validate: reread against task 3's
   actual behavior.
 
-- [ ] Restructure `skills/spec-setup/SKILL.md`'s "Configuration knobs" section: replace
+- [x] Restructure `skills/spec-setup/SKILL.md`'s "Configuration knobs" section: replace
   the single bundled "keep or customize" question (which prior use reported as friction —
   can't accept one knob's default while changing another without an extra round-trip)
   with one AskUserQuestion call containing three separate per-knob questions, in this
