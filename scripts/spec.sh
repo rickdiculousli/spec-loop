@@ -244,8 +244,12 @@ case "$cmd" in
     cur="$(current_branch)"
     if [[ "$cur" != "$SLUG" ]]; then die "done must run on branch '$SLUG' (currently on '$cur')"; fi
     set_status "$PROPOSAL" "done"
-    git add "$PROPOSAL"
-    git commit -m "spec($SLUG): done"
+    if is_local; then
+      : # SPEC_LOOP_SPECS=local — status flip stays uncommitted
+    else
+      git add "$PROPOSAL"
+      git commit -m "spec($SLUG): done"
+    fi
     echo "spec.sh: '$SLUG' marked done — open a PR / merge the branch to land it"
     ;;
 
