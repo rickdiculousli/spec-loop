@@ -80,7 +80,7 @@ alternative:
 |---|---|
 | `a && b`, `a; b`, multi-line | one statement per call; `find . -name <glob> \| xargs <cmd>` for read-only iteration; scratchpad script for real scripts |
 | `cd …` | run directly if already in the target dir (cwd persists); otherwise `git -C`, `go -C`, `make -C`, absolute paths |
-| `git -C <dir>` when `<dir>` is already cwd (or `.`) | drop the `-C <dir>` and run the git command directly |
+| `git`/`go`/`make -C <dir>` when `<dir>` is already cwd (or `.`) | drop the `-C <dir>` and run the command directly |
 | `FOO=1 cmd` | `env FOO=1 cmd` for a one-off; a script or task-runner recipe for recurring setups |
 | `$(…)`, backticks, `$VAR` | resolve once, paste the literal |
 | `sleep` polling, trailing `&` | the Bash tool's background mode |
@@ -90,8 +90,8 @@ Single-quoted spans are always stripped; double-quoted spans are stripped only f
 compound-statement check — `$(…)`/`$VAR` inside double quotes is still caught, since bash
 expands both even when double-quoted.
 
-The `git -C` check compares the flag's argument against the hook's `cwd` input (only
-available when the harness supplies it); a `git -C` pointed anywhere other than cwd, or
+The `-C` check (git, go, make) compares the flag's argument against the hook's `cwd` input
+(only available when the harness supplies it); a `-C` pointed anywhere other than cwd, or
 supplied without a `cwd` to compare against, passes unchanged.
 
 ## Configuration

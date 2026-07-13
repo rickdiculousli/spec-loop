@@ -23,6 +23,10 @@ check 2 block 'cd /x'                      "cd blocked"
 check 2 block 'git -C /repo status'        "git -C matching cwd blocked" '/repo'
 check 2 block 'git -C /repo/ status'       "git -C matching cwd with trailing slash blocked" '/repo'
 check 2 block 'git -C . status'            "git -C . blocked regardless of cwd" '/anywhere'
+check 2 block 'make -C /tmp test'          "make -C matching cwd blocked" '/tmp'
+check 2 block 'go -C /tmp build'           "go -C matching cwd blocked" '/tmp'
+check 0 block 'make -C /other test'        "make -C different dir than cwd allowed" '/tmp'
+check 0 block 'go -C /other build'         "go -C different dir than cwd allowed" '/tmp'
 check 2 block 'FOO=1 make'                 "env-var prefix blocked"
 check 2 block 'echo $(date)'               "command substitution blocked"
 check 2 block 'echo $HOME'                 "variable expansion blocked"

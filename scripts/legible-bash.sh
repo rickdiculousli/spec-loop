@@ -64,14 +64,15 @@ fi
 if printf '%s\n' "$judged" | grep -Eq '^[[:space:]]*cd([[:space:]]|$)'; then
   hit "'cd': cwd persists across calls — if the command targets the current directory, drop the cd and run it directly; only reach for -C/absolute paths (git -C, go -C, make -C) when the command must target a *different* directory"
 fi
-gitc_match="$(printf '%s\n' "$preprocessed" | grep -oE '(^|[^A-Za-z0-9_.-])git[[:space:]]+-C[[:space:]]*("[^"]*"|'"'"'[^'"'"']*'"'"'|[^[:space:]]+)' | head -n1)"
-if [ -n "$gitc_match" ]; then
-  gitc_path="$(printf '%s' "$gitc_match" | sed -E 's/^.*-C[[:space:]]*//')"
-  gitc_path="$(printf '%s' "$gitc_path" | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/')"
-  gitc_norm="${gitc_path%/}"
+cdirc_match="$(printf '%s\n' "$preprocessed" | grep -oE '(^|[^A-Za-z0-9_.-])(git|go|make)[[:space:]]+-C[[:space:]]*("[^"]*"|'"'"'[^'"'"']*'"'"'|[^[:space:]]+)' | head -n1)"
+if [ -n "$cdirc_match" ]; then
+  cdirc_tool="$(printf '%s' "$cdirc_match" | sed -E 's/^[^A-Za-z]*//; s/[[:space:]].*$//')"
+  cdirc_path="$(printf '%s' "$cdirc_match" | sed -E 's/^.*-C[[:space:]]*//')"
+  cdirc_path="$(printf '%s' "$cdirc_path" | sed -E 's/^"(.*)"$/\1/; s/^'"'"'(.*)'"'"'$/\1/')"
+  cdirc_norm="${cdirc_path%/}"
   cwd_norm="${cwd%/}"
-  if [ "$gitc_path" = "." ] || { [ -n "$cwd" ] && [ "$gitc_norm" = "$cwd_norm" ]; }; then
-    hit "'git -C ${gitc_path}': already the current directory — drop the '-C ${gitc_path}' and run the git command directly"
+  if [ "$cdirc_path" = "." ] || { [ -n "$cwd" ] && [ "$cdirc_norm" = "$cwd_norm" ]; }; then
+    hit "'${cdirc_tool} -C ${cdirc_path}': already the current directory — drop the '-C ${cdirc_path}' and run '${cdirc_tool}' directly"
   fi
 fi
 if printf '%s\n' "$judged" | grep -Eq '^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*='; then
