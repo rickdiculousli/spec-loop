@@ -100,7 +100,7 @@ All three knobs are environment variables. Set them in a `settings.json` `"env"`
 in `.claude/settings.json`, personal in `.claude/settings.local.json`, or across all projects in
 `~/.claude/settings.json`. Hook processes and Bash tool calls inherit them. `/spec-setup` always asks
 about each knob separately, one question per knob — `SPEC_LOOP_SPECS` first, then `LEGIBLE_BASH`, then
-`SPEC_LOOP_PUSH` — since all three are already live once the plugin is enabled, so that question isn't
+`SPEC_LOOP_PUSH` — since all three are already live once the plugin is enabled, that question isn't
 skippable via the rest of its menu.
 
 | Variable | Values | Controls |
