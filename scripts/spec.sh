@@ -213,6 +213,9 @@ case "$cmd" in
     elif has_remote && git fetch origin "$SLUG" >/dev/null 2>&1; then
       git checkout -b "$SLUG" --track "origin/$SLUG"
     elif [[ -d "$SPEC_DIR" ]]; then
+      if is_local; then
+        echo "spec.sh: specs folder found locally; reopening its branch"
+      fi
       git checkout -b "$SLUG"    # spec already merged to the default branch; reopen its branch
     else
       die "no branch or spec folder for '$SLUG' — run /brainstorm first"
@@ -224,10 +227,14 @@ case "$cmd" in
       exit 0
     fi
     set_status "$PROPOSAL" "in-progress"
-    git add "$PROPOSAL"
-    git commit -m "spec($SLUG): in-progress"
-    if should_push; then
-      git push -u origin "$SLUG" || echo "spec.sh: push failed — push branch '$SLUG' manually later" >&2
+    if is_local; then
+      : # SPEC_LOOP_SPECS=local — status flip stays uncommitted
+    else
+      git add "$PROPOSAL"
+      git commit -m "spec($SLUG): in-progress"
+      if should_push; then
+        git push -u origin "$SLUG" || echo "spec.sh: push failed — push branch '$SLUG' manually later" >&2
+      fi
     fi
     echo "spec.sh: on branch '$SLUG' — all work (incl. spec deviations) stays here until merge"
     ;;
