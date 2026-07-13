@@ -33,7 +33,7 @@
   `SPEC_LOOP_SPECS=local bash scripts/spec.sh done demo`; confirm `git log --oneline` has
   no new commit and `specs/demo/proposal.md` now reads `status: done`.
 
-- [ ] Add an `untrack` subcommand to `scripts/spec.sh`: `resolve_slug`; die unless the
+- [x] Add an `untrack` subcommand to `scripts/spec.sh`: `resolve_slug`; die unless the
   current branch equals `$SLUG` (mirror `save`'s check); die with a message containing
   `is not git-tracked` unless `git ls-files --error-unmatch "$SPEC_DIR" >/dev/null 2>&1`
   succeeds; then `git rm -r --cached "$SPEC_DIR" >/dev/null`, commit
