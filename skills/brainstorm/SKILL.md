@@ -6,7 +6,7 @@ argument-hint: <idea>
 
 # /brainstorm — Idea → Spec
 
-Turn the user's idea into a new initiative folder under `specs/`, on its own branch. You are building a spec, **not implementing anything** — the terminal state is a spec branch (pushed if a remote exists) plus the suggestion to run `/implement` later.
+Turn the user's idea into a new initiative folder under `specs/`, on its own branch. You are building a spec, **not implementing anything** — the terminal state is a spec branch (pushed if a remote exists) plus the suggestion to run `/implement` later. Under `SPEC_LOOP_SPECS=local`, the branch still opens the same way but the spec folder never lands in git — see step 3.
 
 All git choreography goes through `scripts/spec.sh` in this plugin. Resolve it to an absolute path once (this skill's directory is `<plugin>/skills/brainstorm/`; the script is `<plugin>/scripts/spec.sh`) and invoke it as `bash <abs-path>/spec.sh <cmd> <slug>` — never re-derive the git steps by hand, and never write to the default branch.
 
@@ -56,7 +56,7 @@ Acceptance must be falsifiable — something that can concretely pass or fail, n
 
 **`design.md`** — only if real design decisions surfaced during questioning; otherwise skip.
 
-Then run `spec.sh check` to validate the frontmatter, and `spec.sh save <slug>` to commit the folder on the branch (and push it, if a remote exists — unless the project sets `SPEC_LOOP_PUSH=off`).
+Then run `spec.sh check` to validate the frontmatter, and `spec.sh save <slug>` to commit the folder on the branch (and push it, if a remote exists — unless the project sets `SPEC_LOOP_PUSH=off`). Under `SPEC_LOOP_SPECS=local`, `save` writes and validates the files as usual but commits nothing — `specs/<slug>/` stays git-ignored and local-only.
 
 ## 4. Self-review before presenting
 
