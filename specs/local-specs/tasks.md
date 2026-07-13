@@ -115,7 +115,7 @@
   `git ls-files specs/<slug>` non-empty again. Validate: `bash tests/test-local-specs.sh`
   exits 0.
 
-- [ ] Bump `version` in `.claude-plugin/plugin.json` from `0.5.2` to `0.6.0` (minor — new
+- [x] Bump `version` in `.claude-plugin/plugin.json` from `0.5.2` to `0.6.0` (minor — new
   `SPEC_LOOP_SPECS` knob and two new `spec.sh` subcommands). Validate:
   `grep '"version"' .claude-plugin/plugin.json` shows `0.6.0`.
 
