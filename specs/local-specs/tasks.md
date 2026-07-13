@@ -83,7 +83,7 @@
   it presents three independent per-knob questions (not one combined keep/customize
   choice) followed by at most one scope question, with `SPEC_LOOP_SPECS` listed first.
 
-- [ ] Update `README.md`: add a third row to the Configuration table for
+- [x] Update `README.md`: add a third row to the Configuration table for
   `SPEC_LOOP_SPECS` (`git` default / `local`, controls whether `new/save/start/done`
   touch git under `specs/`); update the sentence introducing the table ("Both knobs" →
   wording that covers three); add `spec.sh untrack <slug>` / `spec.sh track <slug>` lines
